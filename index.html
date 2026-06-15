@@ -1,683 +1,1072 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DRF Hiring Dashboard – FY 2026-27</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HR Hiring Dashboard – Dr. Reddy's Foundation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root {
-    --primary: #1F4E79;
-    --primary-light: #2E75B6;
-    --accent: #ED7D31;
-    --success: #70AD47;
-    --danger: #FF0000;
-    --warn: #FFC000;
-    --bg: #F0F4F8;
-    --card: #FFFFFF;
-    --text: #1a1a2e;
-    --muted: #6c757d;
-    --border: #DEE2E6;
+    --blue-dark:  #1F3864;
+    --blue-mid:   #2E75B6;
+    --blue-light: #D6E4F0;
+    --red:        #C00000;
+    --green:      #1E7E34;
+    --amber:      #E07B00;
+    --teal:       #0D7377;
+    --bg:         #EEF2F7;
+    --card:       #FFFFFF;
+    --border:     #D8E0EA;
+    --text:       #1A2744;
+    --muted:      #6B7B99;
+    --shadow:     0 2px 8px rgba(31,56,100,.10);
+    --shadow-md:  0 4px 16px rgba(31,56,100,.15);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  /* HEADER */
+  /* ── HEADER ── */
   .header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: #fff; padding: 14px 24px;
+    background: linear-gradient(135deg, var(--blue-dark) 0%, #254A85 100%);
+    padding: 0 28px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    height: 68px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.25);
+    position: sticky; top: 0; z-index: 100;
   }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .header-logo {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(255,255,255,.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 900;
+  .header-left { display: flex; align-items: center; gap: 18px; }
+  .logo-wrap { display: flex; align-items: center; background: transparent; border-radius: 6px; padding: 5px 10px; }
+  .header-title {
+    font-size: 22px; font-weight: 700; color: #fff; letter-spacing: .4px;
   }
-  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
-  .header p  { font-size: 11px; opacity: .8; margin-top: 2px; }
+  .header-title span { color: #90C8F0; }
   .header-right { display: flex; align-items: center; gap: 14px; }
-  .status-pill {
-    display: flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,.15); border-radius: 20px; padding: 5px 12px;
-    font-size: 11px;
+  .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76,175,80,.35); animation: pulse 2s infinite; display:none; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 2px rgba(76,175,80,.35)} 50%{box-shadow:0 0 0 5px rgba(76,175,80,.1)} }
+  .status-text { color: #90C8F0; font-size: 12px; }
+  .btn-refresh {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+    color: #fff; padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    font-size: 13px; transition: background .2s;
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
-  .dot.live { background: #70AD47; box-shadow: 0 0 0 3px rgba(112,173,71,.3); animation: pulse 2s infinite; }
-  .dot.loading { background: #FFC000; animation: spin-dot 1s linear infinite; }
-  .dot.error { background: #FF0000; }
-  @keyframes pulse { 0%,100%{ box-shadow: 0 0 0 3px rgba(112,173,71,.3); } 50%{ box-shadow: 0 0 0 6px rgba(112,173,71,.1); } }
-  .last-updated { font-size: 10px; opacity: .75; text-align: right; line-height: 1.4; }
-  #refreshBtn {
-    background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.4);
-    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+  .btn-refresh:hover { background: rgba(255,255,255,.22); }
+  .btn-download-header {
+    background: var(--red); border: none; color: #fff;
+    padding: 6px 16px; border-radius: 20px; cursor: pointer;
+    font-size: 13px; font-weight: 600; position: relative;
     transition: background .2s;
   }
-  #refreshBtn:hover { background: rgba(255,255,255,.32); }
-  #refreshBtn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-download-header:hover { background: #A00000; }
+  .download-menu {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px);
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: var(--shadow-md); min-width: 160px; overflow: hidden; z-index: 200;
+  }
+  .download-menu.open { display: block; }
+  .download-menu button {
+    display: block; width: 100%; padding: 11px 18px; text-align: left;
+    background: none; border: none; font-size: 14px; color: var(--text); cursor: pointer;
+    transition: background .15s;
+  }
+  .download-menu button:hover { background: var(--bg); }
+  .download-menu button + button { border-top: 1px solid var(--border); }
 
-  /* FILTERS */
-  .filters-bar {
-    background: #fff; padding: 10px 24px; border-bottom: 2px solid var(--primary-light);
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  /* ── FILTERS ── */
+  .filter-bar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 14px 28px; display: flex; align-items: flex-end;
+    flex-wrap: wrap; gap: 14px;
+    box-shadow: 0 2px 6px rgba(31,56,100,.06);
   }
-  .filters-label { font-weight: 700; font-size: 11px; color: var(--primary); margin-right: 4px; }
-  .filter-group { display: flex; align-items: center; gap: 5px; }
-  .filter-group label { font-weight: 600; font-size: 11px; color: var(--muted); white-space: nowrap; }
-  .filter-group select {
-    padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
-    font-size: 12px; background: #fff; cursor: pointer; min-width: 110px; max-width: 155px;
+  .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+  .filter-group label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .filter-group select, .filter-group input[type="date"] {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font-size: 13px; color: var(--text);
+    background: var(--bg); outline: none; cursor: pointer;
+    transition: border-color .2s;
   }
-  .filter-group select:focus { outline: none; border-color: var(--primary-light); }
-  #clearFilters {
-    background: var(--accent); color: #fff; border: none; padding: 5px 14px;
-    border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; margin-left: auto;
-    white-space: nowrap;
+  .filter-group select:focus, .filter-group input[type="date"]:focus {
+    border-color: var(--blue-mid); background: #fff;
   }
-  #clearFilters:hover { opacity: .88; }
+  .period-group { display: flex; flex-direction: column; gap: 4px; }
+  .period-group label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .period-inputs { display: flex; align-items: center; gap: 8px; }
+  .period-inputs span { font-size: 12px; color: var(--muted); }
+  .btn-clear {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    padding: 7px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;
+    transition: all .2s; align-self: flex-end;
+  }
+  .btn-clear:hover { border-color: var(--blue-mid); color: var(--blue-mid); }
 
-  /* MAIN */
-  .main { padding: 18px 24px; }
+  /* ── MAIN CONTENT ── */
+  .main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
 
-  /* SCORECARDS */
-  .scorecards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 12px; margin-bottom: 20px;
-  }
+  /* ── SCORECARDS ── */
+  .scorecards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  @media(max-width:1100px){ .scorecards{grid-template-columns:repeat(2,1fr);} }
+  @media(max-width:600px){ .scorecards{grid-template-columns:1fr;} }
+
   .scorecard {
-    background: var(--card); border-radius: 10px; padding: 14px 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,.08); border-top: 4px solid var(--primary);
-    text-align: center; transition: transform .15s, box-shadow .15s;
+    background: var(--card); border-radius: 10px; padding: 18px 20px;
+    box-shadow: var(--shadow); border-left: 4px solid var(--blue-mid);
+    display: flex; flex-direction: column; gap: 6px;
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+    position: relative; overflow: hidden;
   }
-  .scorecard:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.13); }
-  .scorecard.c-total    { border-top-color: var(--primary); }
-  .scorecard.c-closed   { border-top-color: var(--success); }
-  .scorecard.c-within   { border-top-color: #00B0F0; }
-  .scorecard.c-beyond   { border-top-color: var(--danger); }
-  .scorecard.c-open     { border-top-color: var(--accent); }
-  .scorecard.c-opentat  { border-top-color: #CC0000; }
-  .scorecard.c-avgopen  { border-top-color: var(--warn); }
-  .scorecard.c-avgclose { border-top-color: var(--success); }
-  .scorecard-value { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1.1; }
-  .scorecard.c-closed   .scorecard-value { color: var(--success); }
-  .scorecard.c-within   .scorecard-value { color: #00B0F0; }
-  .scorecard.c-beyond   .scorecard-value { color: var(--danger); }
-  .scorecard.c-open     .scorecard-value { color: var(--accent); }
-  .scorecard.c-opentat  .scorecard-value { color: #CC0000; }
-  .scorecard.c-avgopen  .scorecard-value { color: #B8860B; }
-  .scorecard.c-avgclose .scorecard-value { color: var(--success); }
-  .scorecard-label { font-size: 11px; color: var(--muted); margin-top: 5px; font-weight: 600; line-height: 1.3; }
-  .scorecard-sub   { font-size: 10px; color: #aaa; margin-top: 2px; }
+  .scorecard:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .scorecard::after {
+    content: ''; position: absolute; right: -20px; top: -20px;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--blue-light); opacity: .4;
+  }
+  .scorecard.green  { border-left-color: var(--green); }
+  .scorecard.red    { border-left-color: var(--red); }
+  .scorecard.amber  { border-left-color: var(--amber); }
+  .scorecard.teal   { border-left-color: var(--teal); }
+  .scorecard.green::after  { background: #D4EDDA; }
+  .scorecard.red::after    { background: #FAD7D7; }
+  .scorecard.amber::after  { background: #FFF3CD; }
+  .scorecard.teal::after   { background: #D0EEEE; }
 
-  /* CHARTS */
-  .charts-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 16px; }
-  .charts-grid-bottom { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .sc-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; position: relative; z-index: 1; }
+  .sc-value { font-size: 34px; font-weight: 700; color: var(--text); line-height: 1; position: relative; z-index: 1; }
+  .sc-sub   { font-size: 11px; color: var(--muted); position: relative; z-index: 1; }
+  .sc-drill { font-size: 11px; color: var(--blue-mid); position: relative; z-index: 1; margin-top: 4px; }
+
+  /* ── CHARTS ── */
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--blue-dark);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 14px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--blue-light);
+  }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  @media(max-width:800px){ .charts-grid{grid-template-columns:1fr;} }
   .chart-card {
-    background: var(--card); border-radius: 10px; padding: 14px;
-    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    background: var(--card); border-radius: 10px; padding: 20px;
+    box-shadow: var(--shadow);
   }
-  .chart-card.span-2 { grid-column: span 2; }
-  .chart-title { font-size: 13px; font-weight: 700; color: var(--primary); text-align: center; margin-bottom: 10px; }
-  .chart-wrap { position: relative; height: 220px; }
+  .chart-title {
+    font-size: 13px; font-weight: 700; color: var(--blue-dark);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .chart-title::before {
+    content: ''; width: 4px; height: 18px; border-radius: 2px;
+    background: var(--blue-mid); flex-shrink: 0;
+  }
+  .chart-container { position: relative; height: 260px; }
 
-  /* LOADING OVERLAY */
-  #loadingOverlay {
-    position: fixed; inset: 0; background: rgba(31,78,121,.92);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 999; color: #fff;
+  /* ── DETAIL MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 500; align-items: center; justify-content: center;
   }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 12px; width: 92vw; max-width: 1100px;
+    max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--blue-dark); }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: var(--bg); cursor: pointer; font-size: 18px; color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .modal-close:hover { background: var(--border); }
+  .modal-count { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .modal-body { overflow: auto; flex: 1; padding: 0; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .detail-table thead th {
+    background: var(--blue-dark); color: #fff; padding: 10px 14px;
+    text-align: left; font-weight: 600; white-space: nowrap;
+    position: sticky; top: 0;
+  }
+  .detail-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  .detail-table tbody tr:hover { background: var(--blue-light); }
+  .detail-table tbody td { padding: 9px 14px; white-space: nowrap; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-green  { background: #D4EDDA; color: #155724; }
+  .badge-red    { background: #FAD7D7; color: #721C24; }
+  .badge-amber  { background: #FFF3CD; color: #856404; }
+  .badge-blue   { background: #D0E8F8; color: #0C4A6E; }
+  .badge-gray   { background: #E9ECEF; color: #495057; }
+
+  /* ── LOADING & ERROR ── */
+  .loading-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(31,56,100,.7);
+    z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+  }
+  .loading-overlay.show { display: flex; }
   .spinner {
-    width: 48px; height: 48px; border: 5px solid rgba(255,255,255,.3);
-    border-top-color: #fff; border-radius: 50%;
-    animation: spin 0.9s linear infinite; margin-bottom: 18px;
+    width: 50px; height: 50px; border: 5px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #loadingOverlay h2 { font-size: 18px; margin-bottom: 8px; }
-  #loadingOverlay p  { font-size: 13px; opacity: .8; }
-
-  /* ERROR STATE */
-  #errorState {
-    display: none; position: fixed; inset: 0; background: rgba(31,78,121,.95);
-    flex-direction: column; align-items: center; justify-content: center;
-    z-index: 999; color: #fff; text-align: center; padding: 32px;
+  .loading-text { color: #fff; font-size: 16px; font-weight: 500; }
+  .error-box {
+    display: none; background: #FEF2F2; border: 1px solid #FECACA;
+    border-radius: 8px; padding: 20px 24px; margin: 24px 28px;
+    color: #991B1B; text-align: center;
   }
-  #errorState .err-icon { font-size: 52px; margin-bottom: 16px; }
-  #errorState h2 { font-size: 20px; margin-bottom: 10px; }
-  #errorState p  { font-size: 13px; opacity: .85; max-width: 480px; margin-bottom: 20px; line-height: 1.6; }
-  #retryBtn {
-    background: #fff; color: var(--primary); border: none; padding: 10px 28px;
-    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700;
+  .error-box.show { display: block; }
+  .error-box button {
+    margin-top: 12px; background: var(--red); color: #fff; border: none;
+    padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;
   }
 
-  /* SETUP NOTICE (admin only strip – hidden once URL is set) */
-  #setupNotice {
-    display: none; background: #FFF3CD; border-left: 4px solid #FFC000;
-    padding: 10px 24px; font-size: 12px; color: #856404;
-  }
-  #setupNotice strong { display: block; margin-bottom: 4px; }
-  #setupNotice code { background: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
-
-  /* FOOTER */
-  .footer {
-    background: var(--primary); color: rgba(255,255,255,.65);
-    text-align: center; padding: 10px; font-size: 11px; margin-top: 8px;
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 960px) {
-    .charts-grid, .charts-grid-bottom { grid-template-columns: repeat(2,1fr); }
-    .chart-card.span-2 { grid-column: span 1; }
-  }
-  @media (max-width: 560px) {
-    .charts-grid, .charts-grid-bottom { grid-template-columns: 1fr; }
-    .scorecards { grid-template-columns: repeat(2,1fr); }
-    .header h1 { font-size: 14px; }
+  /* ── PRINT STYLES ── */
+  @media print {
+    .header { position: static; }
+    .filter-bar, .btn-refresh, .btn-download-header, .modal-overlay,
+    .loading-overlay, .sc-drill, .live-dot, .status-text { display: none !important; }
+    .main { padding: 8px; }
+    .scorecards { grid-template-columns: repeat(4,1fr); }
+    .charts-grid { grid-template-columns: 1fr 1fr; break-inside: avoid; }
+    .chart-card { box-shadow: none; border: 1px solid var(--border); break-inside: avoid; }
+    body { background: #fff; }
   }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════
-     ADMIN CONFIGURATION  ←  Only this section needs editing
-     ══════════════════════════════════════════════════════
-  HOW TO SET UP (one-time, done by admin):
-  1. Open the cleaned Excel in Google Drive → "Open with Google Sheets"
-  2. In Google Sheets: File → Share → Publish to web
-  3. Choose "Hiring Data" sheet → select "Comma-separated values (.csv)"
-  4. Click Publish → copy the URL
-  5. Paste it below as the value of SHEET_CSV_URL
-  6. Host this HTML file anywhere (web server, SharePoint, GitHub Pages, etc.)
-  Viewers simply open the URL — no login, no upload required.
-  Data auto-refreshes every REFRESH_MINUTES minutes.
-═══════════════════════════════════════════════════════ -->
-<script>
-const SHEET_CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0DLMfz2nhuOKTxiVYOPY0Ze-SLcg-F8iJqlB70auYWGBpzD22iZQAkOO4o5afoattAUk1C8jdsB6f/pub?gid=768065580&single=true&output=csv';   // ← PASTE YOUR GOOGLE SHEETS CSV PUBLISH URL HERE
-const REFRESH_MINUTES  = 5;    // Auto-refresh interval (set 0 to disable)
-const FISCAL_YEAR      = 'FY 2026-27';
-</script>
-<!-- ═══════════════════════════════════════════════════ -->
-
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay">
-  <div class="spinner"></div>
-  <h2>Loading Dashboard…</h2>
-  <p>Fetching live data from Google Sheets</p>
-</div>
-
-<!-- ERROR STATE -->
-<div id="errorState">
-  <div class="err-icon">⚠️</div>
-  <h2>Unable to Load Data</h2>
-  <p id="errorMsg">Could not connect to the data source. Please check your internet connection or contact the administrator.</p>
-  <button id="retryBtn" onclick="init()">Try Again</button>
-</div>
-
-<!-- SETUP NOTICE (shown only when URL is not configured) -->
-<div id="setupNotice">
-  <strong>⚙️ Admin Setup Required</strong>
-  Open this HTML file, find <code>const SHEET_CSV_URL = ''</code> and paste your Google Sheets published CSV URL. See the comments above that line for step-by-step instructions.
-</div>
-
-<!-- HEADER -->
-<div class="header">
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="header">
   <div class="header-left">
-    <div class="header-logo">DRF</div>
-    <div>
-      <h1>Hiring Dashboard &nbsp;|&nbsp; <span id="fyLabel"></span></h1>
-      <p>Dr. Reddy's Foundation &nbsp;·&nbsp; HR Analytics</p>
+    <div class="logo-wrap">
+      <img src="https://dqhc0lmzk7rhn.cloudfront.net/wp-content/uploads/2025/12/08123543/logo-30.png"
+           alt="Dr. Reddy's Foundation" height="42" style="max-width:200px;object-fit:contain;display:block;"/>
     </div>
+    <div class="header-title">HR <span>Hiring</span> Dashboard</div>
   </div>
   <div class="header-right">
-    <div class="status-pill">
-      <div class="dot" id="statusDot"></div>
-      <span id="statusText">Connecting…</span>
+    <div class="live-dot" id="liveDot"></div>
+    <span class="status-text" id="statusText">Loading…</span>
+    <button class="btn-refresh" onclick="refreshData()">↻ Refresh</button>
+    <div style="position:relative;">
+      <button class="btn-download-header" onclick="toggleDownloadMenu()">⬇ Download ▾</button>
+      <div class="download-menu" id="downloadMenu">
+        <button onclick="downloadCSV()">📄 Export as CSV</button>
+        <button onclick="downloadPDF()">🖨 Export as PDF</button>
+      </div>
     </div>
-    <div class="last-updated">
-      Last updated<br><span id="lastUpdatedTime">—</span>
-    </div>
-    <button id="refreshBtn" onclick="manualRefresh()" title="Refresh data now">⟳ Refresh</button>
   </div>
-</div>
+</header>
 
-<!-- FILTERS -->
-<div class="filters-bar">
-  <span class="filters-label">🔍 Filters:</span>
-  <div class="filter-group">
-    <label>Program</label>
-    <select id="f_program" onchange="applyFilters()"><option value="">All</option></select>
-  </div>
+<!-- ═══════════════ FILTER BAR ═══════════════ -->
+<div class="filter-bar">
   <div class="filter-group">
     <label>Role</label>
-    <select id="f_role" onchange="applyFilters()"><option value="">All</option></select>
+    <select id="fRole" onchange="applyFilters()"><option value="">All Roles</option></select>
   </div>
   <div class="filter-group">
     <label>Offer Status</label>
-    <select id="f_offer" onchange="applyFilters()"><option value="">All</option></select>
+    <select id="fOfferStatus" onchange="applyFilters()"><option value="">All</option></select>
   </div>
   <div class="filter-group">
     <label>Position Status</label>
-    <select id="f_posstatus" onchange="applyFilters()"><option value="">All</option></select>
+    <select id="fPositionStatus" onchange="applyFilters()"><option value="">All</option></select>
   </div>
   <div class="filter-group">
-    <label>Month</label>
-    <select id="f_month" onchange="applyFilters()"><option value="">All</option></select>
+    <label>Program</label>
+    <select id="fProgram" onchange="applyFilters()"><option value="">All Programs</option></select>
   </div>
-  <div class="filter-group">
-    <label>Year</label>
-    <select id="f_year" onchange="applyFilters()"><option value="">All</option></select>
+  <div class="period-group">
+    <label>Period (Indent Date)</label>
+    <div class="period-inputs">
+      <input type="date" id="fDateFrom" onchange="applyFilters()" title="From date"/>
+      <span>to</span>
+      <input type="date" id="fDateTo" onchange="applyFilters()" title="To date"/>
+    </div>
   </div>
-  <button id="clearFilters" onclick="clearFilters()">✕ Clear</button>
+  <button class="btn-clear" onclick="clearFilters()">✕ Clear</button>
 </div>
 
-<!-- MAIN CONTENT -->
-<div class="main" id="mainContent"></div>
+<!-- ═══════════════ LOADING / ERROR ═══════════════ -->
+<div class="loading-overlay show" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading dashboard data…</div>
+</div>
+<div class="error-box" id="errorBox">
+  <strong>Unable to load data.</strong><br/>
+  <span id="errorMsg"></span>
+  <br/><button onclick="refreshData()">Retry</button>
+</div>
 
-<!-- FOOTER -->
-<div class="footer">
-  Dr. Reddy's Foundation &nbsp;·&nbsp; Hiring Dashboard <span id="fyFooter"></span>
-  &nbsp;·&nbsp; Data sourced live from Google Sheets &nbsp;·&nbsp; Auto-refreshes every <span id="refreshInfo"></span>
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main" id="mainContent" style="display:none;">
+
+  <!-- Scorecards -->
+  <div class="scorecards">
+    <div class="scorecard" onclick="showDetail('all')">
+      <div class="sc-label">Total Indent</div>
+      <div class="sc-value" id="scTotal">–</div>
+      <div class="sc-sub">All positions raised</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard green" onclick="showDetail('closed')">
+      <div class="sc-label">Total Closed</div>
+      <div class="sc-value" id="scClosed">–</div>
+      <div class="sc-sub">Position Status = Closed</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard green" onclick="showDetail('withinTAT')">
+      <div class="sc-label">Closed Within TAT</div>
+      <div class="sc-value" id="scWithinTAT">–</div>
+      <div class="sc-sub">TAT Status: Within TAT</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard red" onclick="showDetail('beyondTAT')">
+      <div class="sc-label">Closed Beyond TAT</div>
+      <div class="sc-value" id="scBeyondTAT">–</div>
+      <div class="sc-sub">TAT Status: Beyond TAT (Closed)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard teal" onclick="showDetail('open')">
+      <div class="sc-label">Total Open</div>
+      <div class="sc-value" id="scOpen">–</div>
+      <div class="sc-sub">Position Status = Open (excl. On Hold)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard amber" onclick="showDetail('openBeyond')">
+      <div class="sc-label">Open Beyond TAT</div>
+      <div class="sc-value" id="scOpenBeyond">–</div>
+      <div class="sc-sub">TAT Status: Open – Delayed</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard" onclick="showDetail('avgOpen')">
+      <div class="sc-label">Avg Open TAT</div>
+      <div class="sc-value" id="scAvgOpen">–</div>
+      <div class="sc-sub">Days position open (Open positions)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard" onclick="showDetail('avgClosed')">
+      <div class="sc-label">Avg Closed TAT</div>
+      <div class="sc-value" id="scAvgClosed">–</div>
+      <div class="sc-sub">Days Indent → Offer release</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Hiring Status + TAT Performance -->
+  <div class="section-title">Hiring Overview</div>
+  <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card">
+      <div class="chart-title">Hiring Status Overview</div>
+      <div class="chart-container"><canvas id="chartHiringStatus"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">TAT Performance</div>
+      <div class="chart-container"><canvas id="chartTAT"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Role-wise + Offer Status -->
+  <div class="section-title">Role &amp; Offer Analysis</div>
+  <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card">
+      <div class="chart-title">Role-wise Hiring</div>
+      <div class="chart-container"><canvas id="chartRole"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Offer Status Overview</div>
+      <div class="chart-container"><canvas id="chartOfferStatus"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 3: Joining Status + Program-wise -->
+  <div class="section-title">Joining &amp; Program Distribution</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Joining Status</div>
+      <div class="chart-container"><canvas id="chartJoining"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Program-wise Hiring</div>
+      <div class="chart-container"><canvas id="chartProgram"></canvas></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══════════════ DETAIL MODAL ═══════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Detail View</div>
+        <div class="modal-count" id="modalCount"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="downloadModalCSV()" style="background:#1F3864;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
+          ⬇ Download CSV
+        </button>
+        <button class="modal-close" onclick="closeModalBtn()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Centre/Location</th>
+            <th>Program</th>
+            <th>Role</th>
+            <th>Candidate Name</th>
+            <th>Indent Date</th>
+            <th>Offer Release Date</th>
+            <th>Joining Date</th>
+            <th>Position Status</th>
+            <th>Offer Status</th>
+            <th>TAT Status – Offer</th>
+            <th>TAT Status – Joining</th>
+            <th>Days Open</th>
+            <th>Recruiter</th>
+          </tr>
+        </thead>
+        <tbody id="modalBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════
-//  GLOBALS
-// ═══════════════════════════════════════
-let rawData = [], filteredData = [], charts = {}, refreshTimer = null;
+/* ═══════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════ */
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/18iBus8OtRl86N9fvaNSoi7jnEJ-hOE5mEntNt0snrYE/gviz/tq?tqx=out:csv';
+const REFRESH_MINUTES = 5;
 
-const PALETTE = [
-  '#1F4E79','#2E75B6','#70AD47','#ED7D31','#FFC000',
-  '#C00000','#9B59B6','#00B0F0','#548235','#7030A0',
-  '#00B050','#FF7F50','#4472C4','#C55A11','#843C0C'
-];
+/* ═══════════════════════════════════════
+   COLUMN INDEX MAP (0-based)
+   Based on 31-column cleaned sheet:
+   A=0  B=1  C=2  D=3  E=4  F=5  G=6  H=7  I=8
+   J=9  K=10 L=11 M=12 N=13 O=14 P=15 Q=16 R=17
+   S=18 T=19 U=20 V=21 W=22 X=23 Y=24 Z=25 AA=26
+   AB=27 AC=28 AD=29 AE=30
+═══════════════════════════════════════ */
+const COL = {
+  sno:          0,   // S. No.
+  indentBy:     1,   // Indent Raised By
+  centre:       2,   // Centre / Location
+  project:      3,   // Project Name
+  program:      4,   // Program Name
+  role:         5,   // Position / Role
+  posType:      6,   // Position Type
+  indentDate:   7,   // Indent Final Approved Date  (H)
+  recruiter:    8,   // Recruiter (HR) Name
+  candidate:    9,   // Candidate Name
+  source:       10,  // Source of Hire
+  posStatus:    11,  // Position Status              (L)
+  closedDate:   12,  // Position Closed Date
+  offerDate:    13,  // Offer Release Date           (N)
+  offerStatus:  14,  // Offer Status                 (O) ← per user req
+  offerAccept:  15,  // Offer Acceptance Date
+  expJoinDate:  16,  // Expected Date of Joining
+  actJoinDate:  17,  // Actual Date of Joining
+  joinStatus:   18,  // Joining Status               (S)
+  targetTAT:    19,  // Target TAT Days              (T)
+  tatOffer:     20,  // TAT: Indent→Offer Calc       (U)
+  tatJoining:   21,  // TAT: Indent→Joining Calc     (V)
+  daysOpen:     22,  // Days Position Open Calc      (W)
+  tatStatOffer: 23,  // TAT Status – Offer           (X) ← main metric
+  tatStatJoin:  24,  // TAT Status – Joining         (Y)
+  delayOffer:   25,  // Delay Days – Offer           (Z)
+  delayJoin:    26,  // Delay Days – Joining         (AA)
+  ageing:       27,  // Ageing Bucket                (AB)
+  indentMonth:  28,  // Indent Month
+  offerMonth:   29,  // Offer Month
+  joinMonth:    30,  // Joining Month
+};
 
-// ═══════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════
-async function init() {
-  document.getElementById('fyLabel').textContent    = FISCAL_YEAR;
-  document.getElementById('fyFooter').textContent   = FISCAL_YEAR;
-  document.getElementById('refreshInfo').textContent = REFRESH_MINUTES > 0 ? `${REFRESH_MINUTES} min` : 'manually only';
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let allData = [];      // all parsed rows
+let filteredData = []; // rows after filter
+let charts = {};       // chart instances
+let lastDrillFilter = 'all';
 
-  if (!SHEET_CSV_URL) {
-    document.getElementById('loadingOverlay').style.display = 'none';
-    document.getElementById('setupNotice').style.display    = 'block';
-    setStatus('error', 'Not configured');
-    renderEmpty('Admin setup required. See the yellow notice above.');
-    return;
+/* ═══════════════════════════════════════
+   CSV PARSER (handles quoted fields)
+═══════════════════════════════════════ */
+function parseCSV(text) {
+  const lines = [];
+  let cur = '', inQ = false, row = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (inQ && text[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      row.push(cur.trim()); cur = '';
+    } else if ((c === '\n' || c === '\r') && !inQ) {
+      if (c === '\r' && text[i+1] === '\n') i++;
+      row.push(cur.trim()); cur = '';
+      lines.push(row); row = [];
+    } else {
+      cur += c;
+    }
   }
-  await fetchAndRender();
-  if (REFRESH_MINUTES > 0) {
-    clearInterval(refreshTimer);
-    refreshTimer = setInterval(fetchAndRender, REFRESH_MINUTES * 60 * 1000);
-  }
+  if (cur || row.length) { row.push(cur.trim()); lines.push(row); }
+  return lines;
 }
 
-// ═══════════════════════════════════════
-//  FETCH CSV FROM GOOGLE SHEETS
-// ═══════════════════════════════════════
-async function fetchAndRender() {
-  setStatus('loading', 'Refreshing…');
-  document.getElementById('refreshBtn').disabled = true;
-
+/* ═══════════════════════════════════════
+   FETCH & PARSE
+═══════════════════════════════════════ */
+async function fetchData() {
+  showLoading(true);
+  hideError();
   try {
-    // Cache-bust so browsers always fetch the latest version
-    const url = SHEET_CSV_URL + (SHEET_CSV_URL.includes('?') ? '&' : '?') + '_t=' + Date.now();
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
-    const csv = await resp.text();
-    rawData = parseCSV(csv);
-    if (!rawData.length) throw new Error('Sheet appears to be empty');
+    const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('No data returned');
 
-    document.getElementById('loadingOverlay').style.display = 'none';
-    document.getElementById('errorState').style.display     = 'none';
-    document.getElementById('lastUpdatedTime').textContent  =
-      new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
-    setStatus('live', `Live · ${rawData.length} records`);
+    // Find header row (skip first row if it's metadata)
+    let headerIdx = 0;
+    for (let i = 0; i < Math.min(5, rows.length); i++) {
+      const r = rows[i].join(',').toLowerCase();
+      if (r.includes('program') || r.includes('position') || r.includes('role')) {
+        headerIdx = i; break;
+      }
+    }
+
+    // Parse data rows
+    const data = [];
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.every(c => !c)) continue;
+      // Skip rows where S.No is blank or not a number
+      const sno = (r[COL.sno] || '').replace(/[^0-9.]/g,'');
+      if (!sno) continue;
+      data.push(r);
+    }
+
+    allData = data;
     populateFilters();
     applyFilters();
-  } catch (err) {
-    document.getElementById('loadingOverlay').style.display = 'none';
-    document.getElementById('errorMsg').textContent =
-      `Error: ${err.message}. Please check that the Google Sheets publish URL is correct and the sheet is publicly accessible.`;
-    document.getElementById('errorState').style.display = 'flex';
-    setStatus('error', 'Connection error');
+    document.getElementById('mainContent').style.display = '';
+    document.getElementById('liveDot').style.display = '';
+    document.getElementById('statusText').textContent = 'Live · Last refreshed ' + new Date().toLocaleTimeString();
+    showLoading(false);
+  } catch (e) {
+    showLoading(false);
+    showError('Could not load Google Sheet data. Make sure the sheet is shared publicly.<br/><small>' + e.message + '</small>');
   }
-  document.getElementById('refreshBtn').disabled = false;
 }
 
-function manualRefresh() { fetchAndRender(); }
-
-// ═══════════════════════════════════════
-//  CSV PARSER
-// ═══════════════════════════════════════
-function parseCSV(csv) {
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) return [];
-
-  // Robust CSV split respecting quoted fields
-  function splitLine(line) {
-    const fields = []; let cur = ''; let inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
-      else { cur += c; }
-    }
-    fields.push(cur.trim());
-    return fields;
-  }
-
-  const headers = splitLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
-
-  return lines.slice(1).map(line => {
-    const vals = splitLine(line).map(v => v.replace(/^"|"$/g, '').trim());
-    const row = {};
-    headers.forEach((h, i) => row[h] = vals[i] || '');
-    return row;
-  }).filter(r => r['S. No.'] && r['S. No.'] !== '').map(r => {
-    const posStatus     = (r['Position Status'] || '').trim();
-    const tatOffer      = parseFloat(r['TAT: Indent → Offer (Calc)']) || null;
-    const tatJoining    = parseFloat(r['TAT: Indent → Joining (Calc)']) || null;
-    const daysOpen      = parseFloat(r['Days Position Open (Calc)']) || null;
-    const targetTAT     = parseFloat(r['Target TAT Days']) || 30;
-
-    // Compute TAT Status if sheet column is empty
-    let tatStatusOffer = (r['TAT Status - Offer'] || '').trim();
-    if (!tatStatusOffer && tatOffer !== null) {
-      tatStatusOffer = tatOffer <= targetTAT ? 'Within TAT' : 'Delayed';
-    }
-
-    // Extract month/year from "Apr-2026" format
-    const indentMonthFull = r['Indent Month'] || '';
-    let indentMonth = '', indentYear = '';
-    if (indentMonthFull) {
-      const parts = indentMonthFull.split('-');
-      indentMonth = parts[0] || '';
-      indentYear  = parts[1] || '';
-    }
-
-    return {
-      sno:           r['S. No.'],
-      program:       (r['Program Name'] || '').trim(),
-      role:          (r['Position / Role'] || '').trim(),
-      posStatus,
-      offerStatus:   (r['Offer Status'] || '').trim(),
-      joiningStatus: (r['Joining Status'] || '').trim(),
-      tatStatusOffer,
-      tatOffer, tatJoining, daysOpen, targetTAT,
-      indentMonth, indentYear,
-    };
-  });
+/* ═══════════════════════════════════════
+   FILTER POPULATION
+═══════════════════════════════════════ */
+function unique(arr) {
+  return [...new Set(arr.filter(v => v && v !== 'NA' && v !== '#N/A'))].sort();
 }
-
-// ═══════════════════════════════════════
-//  STATUS DOT
-// ═══════════════════════════════════════
-function setStatus(type, text) {
-  const dot  = document.getElementById('statusDot');
-  const span = document.getElementById('statusText');
-  dot.className = 'dot ' + (type === 'live' ? 'live' : type === 'loading' ? 'loading' : 'error');
-  span.textContent = text;
-}
-
-// ═══════════════════════════════════════
-//  FILTERS
-// ═══════════════════════════════════════
 function populateFilters() {
-  const uniq = fn => [...new Set(rawData.map(fn).filter(Boolean))].sort();
-  fillSelect('f_program',   uniq(r => r.program));
-  fillSelect('f_role',      uniq(r => r.role));
-  fillSelect('f_offer',     uniq(r => r.offerStatus || null));
-  fillSelect('f_posstatus', uniq(r => r.posStatus   || null));
-  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const months = [...new Set(rawData.map(r => r.indentMonth).filter(Boolean))];
-  months.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-  fillSelect('f_month', months);
-  fillSelect('f_year', [...new Set(rawData.map(r => r.indentYear).filter(Boolean))].sort());
+  fillSelect('fRole',           unique(allData.map(r => r[COL.role])));
+  fillSelect('fOfferStatus',    unique(allData.map(r => r[COL.offerStatus])));
+  fillSelect('fPositionStatus', unique(allData.map(r => r[COL.posStatus])));
+  fillSelect('fProgram',        unique(allData.map(r => r[COL.program])));
 }
-
-function fillSelect(id, opts) {
+function fillSelect(id, options) {
   const sel = document.getElementById(id);
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">All</option>';
-  opts.forEach(o => {
-    const el = document.createElement('option');
-    el.value = el.textContent = o;
-    sel.appendChild(el);
-  });
-  if (opts.includes(prev)) sel.value = prev;
+  const cur = sel.value;
+  const labels = {
+    fRole: 'All Roles', fOfferStatus: 'All', fPositionStatus: 'All', fProgram: 'All Programs'
+  };
+  sel.innerHTML = `<option value="">${labels[id]||'All'}</option>` +
+    options.map(o => `<option value="${escHtml(o)}"${o===cur?' selected':''}>${escHtml(o)}</option>`).join('');
 }
 
+/* ═══════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════ */
 function applyFilters() {
-  const fP = document.getElementById('f_program').value;
-  const fR = document.getElementById('f_role').value;
-  const fO = document.getElementById('f_offer').value;
-  const fS = document.getElementById('f_posstatus').value;
-  const fM = document.getElementById('f_month').value;
-  const fY = document.getElementById('f_year').value;
+  const role   = document.getElementById('fRole').value;
+  const offer  = document.getElementById('fOfferStatus').value;
+  const pos    = document.getElementById('fPositionStatus').value;
+  const prog   = document.getElementById('fProgram').value;
+  const dFrom  = document.getElementById('fDateFrom').value;
+  const dTo    = document.getElementById('fDateTo').value;
 
-  filteredData = rawData.filter(r =>
-    (!fP || r.program     === fP) &&
-    (!fR || r.role        === fR) &&
-    (!fO || r.offerStatus === fO) &&
-    (!fS || r.posStatus   === fS) &&
-    (!fM || r.indentMonth === fM) &&
-    (!fY || r.indentYear  === fY)
-  );
-  renderDashboard();
+  filteredData = allData.filter(r => {
+    if (role  && r[COL.role]       !== role)  return false;
+    if (offer && r[COL.offerStatus]!== offer) return false;
+    if (pos   && r[COL.posStatus]  !== pos)   return false;
+    if (prog  && r[COL.program]    !== prog)  return false;
+    if (dFrom || dTo) {
+      const dateStr = r[COL.indentDate];
+      if (!dateStr || dateStr === 'NA') return false;
+      const d = parseDate(dateStr);
+      if (!d) return false;
+      if (dFrom && d < new Date(dFrom)) return false;
+      if (dTo   && d > new Date(dTo + 'T23:59:59')) return false;
+    }
+    return true;
+  });
+  renderScoreCards();
+  renderAllCharts();
+  // Re-run drill-down if open
+  if (document.getElementById('modalOverlay').classList.contains('open')) {
+    showDetail(lastDrillFilter);
+  }
 }
-
 function clearFilters() {
-  ['f_program','f_role','f_offer','f_posstatus','f_month','f_year']
-    .forEach(id => document.getElementById(id).value = '');
+  ['fRole','fOfferStatus','fPositionStatus','fProgram'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fDateFrom').value = '';
+  document.getElementById('fDateTo').value = '';
   applyFilters();
 }
 
-// ═══════════════════════════════════════
-//  SCORECARDS
-// ═══════════════════════════════════════
-function computeScores(data) {
-  const totalIndent   = data.length;
-  const totalClosed   = data.filter(r => r.posStatus === 'Closed').length;
-  const withOffer     = data.filter(r => r.tatOffer !== null);
-  const withinTAT     = withOffer.filter(r => r.posStatus === 'Closed' && r.tatOffer <= r.targetTAT).length;
-  const beyondTAT     = withOffer.filter(r => r.posStatus === 'Closed' && r.tatOffer >  r.targetTAT).length;
-  const totalOpen     = data.filter(r => r.posStatus !== 'Closed').length;
-  const openBeyondTAT = data.filter(r => r.posStatus !== 'Closed' && r.daysOpen !== null && r.daysOpen > r.targetTAT).length;
-  const avgFn         = arr => { const v = arr.filter(x => x !== null && !isNaN(x)); return v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length) : 0; };
-  const avgOpenTAT    = avgFn(data.filter(r => r.posStatus !== 'Closed' && r.daysOpen !== null).map(r => r.daysOpen));
-  const avgClosedTAT  = avgFn(withOffer.map(r => r.tatOffer));
-  return { totalIndent, totalClosed, withinTAT, beyondTAT, totalOpen, openBeyondTAT, avgOpenTAT, avgClosedTAT };
+/* ═══════════════════════════════════════
+   SCORECARD CALCULATIONS
+═══════════════════════════════════════ */
+function num(v) {
+  const n = parseFloat((v||'').toString().replace(/[^0-9.\-]/g,''));
+  return isNaN(n) ? null : n;
+}
+function avg(arr) {
+  const vals = arr.filter(v => v !== null);
+  return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+}
+function parseDate(s) {
+  if (!s || s==='NA' || s==='#N/A') return null;
+  const parts = s.split(/[\/-]/);
+  if (parts.length === 3) {
+    const p0 = parseInt(parts[0]), p1 = parseInt(parts[1]), p2 = parseInt(parts[2]);
+    if (p2 > 1000) return new Date(p2, p1 - 1, p0); // DD-MM-YYYY (sheet format)
+    if (p0 > 1000) return new Date(p0, p1 - 1, p2); // YYYY-MM-DD (date picker ISO)
+  }
+  return new Date(s);
 }
 
-// ═══════════════════════════════════════
-//  RENDER DASHBOARD
-// ═══════════════════════════════════════
-function renderEmpty(msg) {
-  document.getElementById('mainContent').innerHTML = `
-    <div style="text-align:center;padding:60px 20px;color:#6c757d;">
-      <div style="font-size:48px;margin-bottom:12px;">🔍</div>
-      <h3 style="color:#1F4E79;margin-bottom:6px;">${msg}</h3>
-    </div>`;
+function renderScoreCards() {
+  const D = filteredData;
+  const totalIndent   = D.length;
+  const totalClosed   = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed').length;
+
+  // Closed Within / Beyond TAT from col X (TAT Status – Offer)
+  const closedWithin  = D.filter(r => (r[COL.tatStatOffer]||'').toLowerCase().includes('within tat')).length;
+  const closedBeyond  = D.filter(r => (r[COL.tatStatOffer]||'').toLowerCase().includes('beyond tat') &&
+                                      (r[COL.tatStatOffer]||'').toLowerCase().includes('closed')).length;
+
+  // Total Open: Position Status = "Open" ONLY (exclude On Hold)
+  const openRows      = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'open');
+  const totalOpen     = openRows.length;
+
+  // Open Beyond TAT: from col X
+  const openBeyond    = D.filter(r => (r[COL.tatStatOffer]||'').toLowerCase().includes('open') &&
+                                      (r[COL.tatStatOffer]||'').toLowerCase().includes('delayed')).length;
+
+  // Avg Open TAT: Days Position Open for Open rows
+  const avgOpenTAT    = avg(openRows.map(r => num(r[COL.daysOpen])));
+
+  // Avg Closed TAT: TAT Indent→Offer for Closed rows with offer release date only
+  const withOffer     = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed' &&
+                                      r[COL.offerDate] && r[COL.offerDate] !== '' &&
+                                      r[COL.offerDate] !== 'NA' && r[COL.offerDate] !== '#N/A' &&
+                                      num(r[COL.tatOffer]) !== null);
+  const avgClosedTAT  = avg(withOffer.map(r => num(r[COL.tatOffer])));
+
+  setText('scTotal',     totalIndent);
+  setText('scClosed',    totalClosed);
+  setText('scWithinTAT', closedWithin);
+  setText('scBeyondTAT', closedBeyond);
+  setText('scOpen',      totalOpen);
+  setText('scOpenBeyond',openBeyond);
+  setText('scAvgOpen',   avgOpenTAT !== null ? avgOpenTAT.toFixed(1) + ' d' : '–');
+  setText('scAvgClosed', avgClosedTAT !== null ? avgClosedTAT.toFixed(1) + ' d' : '–');
 }
 
-function renderDashboard() {
-  const data = filteredData;
-  if (!data.length) { renderEmpty('No data matches the selected filters.'); return; }
+/* ═══════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════ */
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
 
-  const sc = computeScores(data);
+// Fallback palette for donut segments not in colorMap
+const DONUT_PALETTE = ['#5B8DB8','#8E44AD','#16A085','#D35400','#2C3E50','#C0392B','#27AE60','#2980B9'];
+// Distinct palette for horizontal bar charts (each bar gets a different color)
+const BAR_PALETTE   = ['#2E75B6','#1E7E34','#9B59B6','#E07B00','#0D7377','#C00000','#E91E63','#00897B','#F57C00','#546E7A'];
+const CHART_FONT    = "'Segoe UI', Arial, sans-serif";
 
-  document.getElementById('mainContent').innerHTML = `
-    <div class="scorecards">
-      <div class="scorecard c-total">
-        <div class="scorecard-value">${sc.totalIndent}</div>
-        <div class="scorecard-label">Total Indent</div>
-        <div class="scorecard-sub">Positions raised</div>
-      </div>
-      <div class="scorecard c-closed">
-        <div class="scorecard-value">${sc.totalClosed}</div>
-        <div class="scorecard-label">Total Closed</div>
-        <div class="scorecard-sub">Positions filled</div>
-      </div>
-      <div class="scorecard c-within">
-        <div class="scorecard-value">${sc.withinTAT}</div>
-        <div class="scorecard-label">Closed Within TAT</div>
-        <div class="scorecard-sub">On-time closures</div>
-      </div>
-      <div class="scorecard c-beyond">
-        <div class="scorecard-value">${sc.beyondTAT}</div>
-        <div class="scorecard-label">Closed Beyond TAT</div>
-        <div class="scorecard-sub">Delayed closures</div>
-      </div>
-      <div class="scorecard c-open">
-        <div class="scorecard-value">${sc.totalOpen}</div>
-        <div class="scorecard-label">Total Open</div>
-        <div class="scorecard-sub">Still in pipeline</div>
-      </div>
-      <div class="scorecard c-opentat">
-        <div class="scorecard-value">${sc.openBeyondTAT}</div>
-        <div class="scorecard-label">Open Beyond TAT</div>
-        <div class="scorecard-sub">Overdue open roles</div>
-      </div>
-      <div class="scorecard c-avgopen">
-        <div class="scorecard-value">${sc.avgOpenTAT}<span style="font-size:13px;font-weight:400"> d</span></div>
-        <div class="scorecard-label">Avg Open TAT</div>
-        <div class="scorecard-sub">Days open positions</div>
-      </div>
-      <div class="scorecard c-avgclose">
-        <div class="scorecard-value">${sc.avgClosedTAT}<span style="font-size:13px;font-weight:400"> d</span></div>
-        <div class="scorecard-label">Avg Closed TAT</div>
-        <div class="scorecard-sub">Indent → Offer (where offered)</div>
-      </div>
-    </div>
+// Semantic color map (covers all known values)
+const COLOR_MAP = {
+  // Position Status
+  'Closed':                '#1E7E34',
+  'Open':                  '#2E75B6',
+  'On Hold':               '#E07B00',
+  // TAT Status – Offer (col X)
+  'Closed – Within TAT':   '#1E7E34',
+  'Closed - Within TAT':   '#1E7E34',
+  'Closed – Beyond TAT':   '#C00000',
+  'Closed - Beyond TAT':   '#C00000',
+  'Open – Delayed':        '#E07B00',
+  'Open - Delayed':        '#E07B00',
+  'Open – On Track':       '#2E75B6',
+  'Open - On Track':       '#2E75B6',
+  // Offer Status (col O) — contrasting professional colors
+  'Offer Released':        '#1E7E34',   // green
+  'Offer Accepted':        '#0D7377',   // teal
+  'Offer Declined':        '#C00000',   // red
+  'Offer Pending':         '#E07B00',   // amber
+  'Not Released':          '#8E44AD',   // purple
+  '(Blank)':               '#95A5A6',   // neutral gray for blank/missing
+  // Joining Status
+  'Joined – Within TAT':   '#1E7E34',
+  'Joined - Within TAT':   '#1E7E34',
+  'Joined – Beyond TAT':   '#E07B00',
+  'Joined - Beyond TAT':   '#E07B00',
+  'Closed - Not Joined':   '#6B7B99',
+  'Position - Open':       '#2E75B6',
+};
 
-    <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">Hiring Status Overview</div><div class="chart-wrap"><canvas id="ch_status"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Program-wise Hiring</div><div class="chart-wrap"><canvas id="ch_program"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Role-wise Hiring</div><div class="chart-wrap"><canvas id="ch_role"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">TAT Performance</div><div class="chart-wrap"><canvas id="ch_tat"></canvas></div></div>
-    </div>
-    <div class="charts-grid-bottom">
-      <div class="chart-card span-2"><div class="chart-title">Offer Status Overview</div><div class="chart-wrap"><canvas id="ch_offer"></canvas></div></div>
-      <div class="chart-card span-2"><div class="chart-title">Joining Status Overview</div><div class="chart-wrap"><canvas id="ch_joining"></canvas></div></div>
-    </div>`;
-
-  Object.values(charts).forEach(c => c.destroy()); charts = {};
-
-  // 1. Hiring Status
-  renderDonut('ch_status', countBy(data, r => r.posStatus || 'Open (Unset)'), {
-    colorMap: { 'Closed':'#70AD47','Open (Unset)':'#2E75B6','On Hold':'#FFC000' }
+function countBy(data, colIdx) {
+  const m = {};
+  data.forEach(r => {
+    const v = (r[colIdx]||'').trim() || '(Blank)';
+    m[v] = (m[v]||0) + 1;
   });
-
-  // 2. Program-wise
-  renderDonut('ch_program', countBy(data, r => r.program));
-
-  // 3. Role-wise
-  renderDonut('ch_role', countBy(data, r => r.role));
-
-  // 4. TAT Performance (among positions with offers)
-  const tatBuckets = {};
-  data.filter(r => r.tatOffer !== null).forEach(r => {
-    const k = r.posStatus === 'Closed'
-      ? (r.tatOffer <= r.targetTAT ? 'Within TAT' : 'Delayed')
-      : 'Open / In Progress';
-    tatBuckets[k] = (tatBuckets[k] || 0) + 1;
-  });
-  const noOffer = data.filter(r => r.tatOffer === null && r.posStatus !== 'Closed').length;
-  if (noOffer) tatBuckets['In Pipeline'] = noOffer;
-  renderDonut('ch_tat', tatBuckets, {
-    colorMap: { 'Within TAT':'#70AD47','Delayed':'#FF0000','Open / In Progress':'#2E75B6','In Pipeline':'#FFC000' }
-  });
-
-  // 5. Offer Status
-  const offerMap = countBy(data, r => r.offerStatus || null);
-  if (!Object.keys(offerMap).length) offerMap['No Offer Yet'] = data.length;
-  renderDonut('ch_offer', offerMap, {
-    colorMap: { 'Accepted':'#70AD47','Declined':'#FF0000','No Offer Yet':'#BFBFBF','Pending':'#FFC000' }
-  });
-
-  // 6. Joining Status
-  const joinMap = countBy(data, r => r.joiningStatus || null);
-  if (!Object.keys(joinMap).length) joinMap['Not Yet'] = data.length;
-  renderDonut('ch_joining', joinMap, {
-    colorMap: { 'Joined':'#70AD47','Not Joined':'#FF0000','Not Yet':'#BFBFBF' }
-  });
-
+  return m;
 }
 
-// ═══════════════════════════════════════
-//  DONUT HELPER
-// ═══════════════════════════════════════
-function countBy(data, fn) {
-  const out = {};
-  data.forEach(r => { const k = fn(r); if (k) out[k] = (out[k] || 0) + 1; });
-  return out;
-}
+function renderDonut(canvasId, countMap, title, clickFn) {
+  const existing = charts[canvasId];
+  if (existing) existing.destroy();
 
-function renderDonut(id, countsObj, opts = {}) {
-  const labels = Object.keys(countsObj);
-  const values = Object.values(countsObj);
-  const total  = values.reduce((a, b) => a + b, 0);
-  const colors = labels.map((l, i) => (opts.colorMap && opts.colorMap[l]) ? opts.colorMap[l] : PALETTE[i % PALETTE.length]);
+  const labels = Object.keys(countMap);
+  const values = Object.values(countMap);
+  const total  = values.reduce((a,b)=>a+b,0);
 
-  charts[id] = new Chart(document.getElementById(id), {
+  // Assign colors: use COLOR_MAP first, then DONUT_PALETTE for unknowns
+  // Track which DONUT_PALETTE index we're at to avoid repeated reuse
+  let paletteIdx = 0;
+  const usedColors = new Set(Object.values(COLOR_MAP));
+  const colors = labels.map(l => {
+    if (COLOR_MAP[l]) return COLOR_MAP[l];
+    // pick next palette color not already used by a colorMap match in this chart
+    let c = DONUT_PALETTE[paletteIdx % DONUT_PALETTE.length];
+    paletteIdx++;
+    return c;
+  });
+
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
     type: 'doughnut',
-    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }] },
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+    },
     options: {
-      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      responsive: true, maintainAspectRatio: false,
+      cutout: '58%',
       plugins: {
         legend: {
           position: 'right',
-          labels: { font: { family: 'Arial', size: 10 }, boxWidth: 12, padding: 8 }
+          labels: {
+            font: { family: CHART_FONT, size: 11 },
+            padding: 10,
+            generateLabels(chart) {
+              const ds = chart.data.datasets[0];
+              return chart.data.labels.map((label,i) => ({
+                text: `${label} (${ds.data[i]})`,
+                fillStyle: ds.backgroundColor[i],
+                strokeStyle: '#fff',
+                lineWidth: 1,
+                hidden: false,
+                index: i
+              }));
+            }
+          }
         },
         tooltip: {
           callbacks: {
-            label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? ((ctx.raw/total)*100).toFixed(1) : 0}%)`
+            label(ctx) {
+              const pct = total ? ((ctx.parsed / total)*100).toFixed(1) : 0;
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }
           }
+        },
+        // Always-visible data labels on each segment
+        datalabels: {
+          display(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+          formatter(value) { return value; },
+          color: '#fff',
+          font: { family: CHART_FONT, size: 13, weight: '700' },
+          textShadowColor: 'rgba(0,0,0,0.4)',
+          textShadowBlur: 4,
+        }
+      },
+      onClick(evt, els) {
+        if (clickFn && els.length) {
+          const label = labels[els[0].index];
+          clickFn(label);
         }
       }
-    },
-    plugins: [{
-      id: 'centerText',
-      beforeDraw(chart) {
-        const { ctx, chartArea: { top, bottom, left, right } } = chart;
-        const cx = (left+right)/2, cy = (top+bottom)/2;
-        ctx.save();
-        ctx.font = 'bold 18px Arial'; ctx.fillStyle = '#1F4E79';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(total, cx, cy - 8);
-        ctx.font = '10px Arial'; ctx.fillStyle = '#888';
-        ctx.fillText('Total', cx, cy + 10);
-        ctx.restore();
-      }
-    }, {
-      id: 'sliceLabels',
-      afterDatasetDraw(chart) {
-        const { ctx } = chart;
-        chart.getDatasetMeta(0).data.forEach((arc, i) => {
-          const pct = total ? (chart.data.datasets[0].data[i] / total) * 100 : 0;
-          if (pct < 5) return;
-          const angle = (arc.startAngle + arc.endAngle) / 2;
-          const r = (arc.outerRadius + arc.innerRadius) / 2;
-          const x = arc.x + r * Math.cos(angle), y = arc.y + r * Math.sin(angle);
-          ctx.save();
-          ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(pct.toFixed(1) + '%', x, y);
-          ctx.restore();
-        });
-      }
-    }]
+    }
   });
 }
 
-// ═══════════════════════════════════════
-//  START
-// ═══════════════════════════════════════
-window.addEventListener('DOMContentLoaded', init);
+function renderBar(canvasId, countMap, clickFn) {
+  const existing = charts[canvasId];
+  if (existing) existing.destroy();
+
+  const labels = Object.keys(countMap).sort((a,b) => countMap[b]-countMap[a]);
+  const values = labels.map(l => countMap[l]);
+  // Each bar gets a distinct color from BAR_PALETTE
+  const barColors = labels.map((_, i) => BAR_PALETTE[i % BAR_PALETTE.length]);
+
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Count',
+        data: values,
+        backgroundColor: barColors,
+        borderRadius: 4, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label(ctx){ return ` ${ctx.parsed.x} positions`; } } },
+        // Always-visible count at end of each bar
+        datalabels: {
+          anchor: 'end', align: 'end',
+          formatter(value) { return value; },
+          color: '#1A2744',
+          font: { family: CHART_FONT, size: 12, weight: '700' },
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#EEF2F7' },
+          ticks: { font: { family: CHART_FONT, size: 11 } },
+          // Add a little padding so the label doesn't clip
+          afterDataLimits(scale) { scale.max += 1; }
+        },
+        y: { grid: { display: false }, ticks: { font: { family: CHART_FONT, size: 11 }, autoSkip: false } }
+      },
+      onClick(evt, els) {
+        if (clickFn && els.length) {
+          const label = labels[els[0].index];
+          clickFn(label);
+        }
+      }
+    }
+  });
+}
+
+function renderAllCharts() {
+  const D = filteredData;
+
+  // 1. Hiring Status Overview (Position Status)
+  renderDonut('chartHiringStatus', countBy(D, COL.posStatus), 'Hiring Status',
+    label => showDetailByColumn(COL.posStatus, label, 'Hiring Status: ' + label));
+
+  // 2. TAT Performance (TAT Status – Offer, col X)
+  renderDonut('chartTAT', countBy(D, COL.tatStatOffer), 'TAT Performance',
+    label => showDetailByColumn(COL.tatStatOffer, label, 'TAT Status: ' + label));
+
+  // 3. Role-wise Hiring
+  const roleData = countBy(D, COL.role);
+  if (Object.keys(roleData).length > 8) {
+    renderBar('chartRole', roleData,
+      label => showDetailByColumn(COL.role, label, 'Role: ' + label));
+  } else {
+    renderDonut('chartRole', roleData, 'Role-wise',
+      label => showDetailByColumn(COL.role, label, 'Role: ' + label));
+  }
+
+  // 4. Offer Status Overview (col O = Offer Status)
+  renderDonut('chartOfferStatus', countBy(D, COL.offerStatus), 'Offer Status',
+    label => showDetailByColumn(COL.offerStatus, label, 'Offer Status: ' + label));
+
+  // 5. Joining Status
+  renderDonut('chartJoining', countBy(D, COL.joinStatus), 'Joining Status',
+    label => showDetailByColumn(COL.joinStatus, label, 'Joining Status: ' + label));
+
+  // 6. Program-wise Hiring
+  const progData = countBy(D, COL.program);
+  if (Object.keys(progData).length > 6) {
+    renderBar('chartProgram', progData,
+      label => showDetailByColumn(COL.program, label, 'Program: ' + label));
+  } else {
+    renderDonut('chartProgram', progData, 'Program-wise',
+      label => showDetailByColumn(COL.program, label, 'Program: ' + label));
+  }
+}
+
+/* ═══════════════════════════════════════
+   DETAIL / DRILL-DOWN MODAL
+═══════════════════════════════════════ */
+function showDetail(filter) {
+  lastDrillFilter = filter;
+  let rows, title;
+  const D = filteredData;
+
+  switch(filter) {
+    case 'all':      rows = D; title = 'All Indents'; break;
+    case 'closed':   rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='closed'); title='Closed Positions'; break;
+    case 'withinTAT':rows = D.filter(r=>(r[COL.tatStatOffer]||'').toLowerCase().includes('within tat')); title='Closed Within TAT'; break;
+    case 'beyondTAT':rows = D.filter(r=>(r[COL.tatStatOffer]||'').toLowerCase().includes('beyond tat')&&(r[COL.tatStatOffer]||'').toLowerCase().includes('closed')); title='Closed Beyond TAT'; break;
+    case 'open':     rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='open'); title='Open Positions'; break;
+    case 'openBeyond':rows= D.filter(r=>(r[COL.tatStatOffer]||'').toLowerCase().includes('open')&&(r[COL.tatStatOffer]||'').toLowerCase().includes('delayed')); title='Open – Delayed'; break;
+    case 'avgOpen':  rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='open'); title='Open Positions (Avg TAT)'; break;
+    case 'avgClosed':rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='closed'&&r[COL.offerDate]&&r[COL.offerDate]!=='NA'); title='Closed Positions with Offer (Avg Closed TAT)'; break;
+    default:         rows = D; title='Detail View';
+  }
+  openModal(title, rows);
+}
+
+function showDetailByColumn(colIdx, value, title) {
+  const rows = filteredData.filter(r=>(r[colIdx]||'').trim()===value.trim());
+  openModal(title, rows);
+}
+
+function openModal(title, rows) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalCount').textContent = rows.length + ' record(s)';
+
+  const tbody = document.getElementById('modalBody');
+  tbody.innerHTML = rows.map((r,i) => {
+    const tat = (r[COL.tatStatOffer]||'').trim();
+    const tatBadge = tatBadgeClass(tat);
+    const ps = (r[COL.posStatus]||'').trim();
+    const psBadge = ps.toLowerCase()==='closed'?'badge-green': ps.toLowerCase()==='open'?'badge-blue':'badge-amber';
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${escHtml(r[COL.centre]||'–')}</td>
+      <td>${escHtml(r[COL.program]||'–')}</td>
+      <td>${escHtml(r[COL.role]||'–')}</td>
+      <td>${escHtml(r[COL.candidate]||'–')}</td>
+      <td>${escHtml(r[COL.indentDate]||'–')}</td>
+      <td>${escHtml(r[COL.offerDate]||'–')}</td>
+      <td>${escHtml(r[COL.actJoinDate]||'–')}</td>
+      <td><span class="badge ${psBadge}">${escHtml(ps||'–')}</span></td>
+      <td>${escHtml(r[COL.offerStatus]||'–')}</td>
+      <td><span class="badge ${tatBadge}">${escHtml(tat||'–')}</span></td>
+      <td>${escHtml(r[COL.tatStatJoin]||'–')}</td>
+      <td>${r[COL.daysOpen]||'–'}</td>
+      <td>${escHtml(r[COL.recruiter]||'–')}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function tatBadgeClass(tat) {
+  const t = (tat||'').toLowerCase();
+  if (t.includes('within')) return 'badge-green';
+  if (t.includes('beyond')) return 'badge-red';
+  if (t.includes('delayed')) return 'badge-amber';
+  if (t.includes('on track')) return 'badge-blue';
+  return 'badge-gray';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalBtn();
+}
+function closeModalBtn() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function downloadModalCSV() {
+  const title  = document.getElementById('modalTitle').textContent;
+  const headers = ['#','Centre/Location','Program','Role','Candidate Name',
+    'Indent Date','Offer Release Date','Joining Date','Position Status',
+    'Offer Status','TAT Status – Offer','TAT Status – Joining','Days Open','Recruiter'];
+  const rows = [...document.querySelectorAll('#modalBody tr')].map(tr =>
+    [...tr.querySelectorAll('td')].map(td => {
+      const text = td.innerText.trim();
+      return `"${text === '–' ? '' : text.replace(/"/g,'""')}"`;
+    })
+  );
+  const csv = [headers.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = title.replace(/[^a-z0-9]/gi,'_') + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════
+   DOWNLOAD
+═══════════════════════════════════════ */
+function toggleDownloadMenu() {
+  document.getElementById('downloadMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.btn-download-header') && !e.target.closest('.download-menu')) {
+    document.getElementById('downloadMenu').classList.remove('open');
+  }
+});
+
+function downloadCSV() {
+  document.getElementById('downloadMenu').classList.remove('open');
+  const headers = [
+    'S.No','Centre/Location','Program','Role','Candidate Name',
+    'Indent Date','Offer Release Date','Joining Date',
+    'Position Status','Offer Status','TAT Status-Offer','TAT Status-Joining',
+    'Days Open','Target TAT','TAT Indent→Offer','Recruiter'
+  ];
+  const rows = filteredData.map(r => [
+    r[COL.sno], r[COL.centre], r[COL.program], r[COL.role], r[COL.candidate],
+    r[COL.indentDate], r[COL.offerDate], r[COL.actJoinDate],
+    r[COL.posStatus], r[COL.offerStatus], r[COL.tatStatOffer], r[COL.tatStatJoin],
+    r[COL.daysOpen], r[COL.targetTAT], r[COL.tatOffer], r[COL.recruiter]
+  ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`));
+
+  const csv = [headers.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'HR_Hiring_Data_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function downloadPDF() {
+  document.getElementById('downloadMenu').classList.remove('open');
+  window.print();
+}
+
+/* ═══════════════════════════════════════
+   UTILS
+═══════════════════════════════════════ */
+function setText(id, val) { document.getElementById(id).textContent = val; }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showLoading(v) { document.getElementById('loadingOverlay').classList.toggle('show', v); }
+function hideError() { document.getElementById('errorBox').classList.remove('show'); }
+function showError(msg) {
+  document.getElementById('errorMsg').innerHTML = msg;
+  document.getElementById('errorBox').classList.add('show');
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('statusText').textContent = 'Error loading data';
+}
+function refreshData() { fetchData(); }
+
+/* ═══════════════════════════════════════
+   AUTO-REFRESH & INIT
+═══════════════════════════════════════ */
+fetchData();
+setInterval(fetchData, REFRESH_MINUTES * 60 * 1000);
 </script>
 </body>
 </html>
