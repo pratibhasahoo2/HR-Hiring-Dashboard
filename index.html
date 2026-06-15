@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRF Hiring Dashboard – FY 2026-27</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1F4E79;
+    --primary-light: #2E75B6;
+    --accent: #ED7D31;
+    --success: #70AD47;
+    --danger: #FF0000;
+    --warn: #FFC000;
+    --bg: #F0F4F8;
+    --card: #FFFFFF;
+    --text: #1a1a2e;
+    --muted: #6c757d;
+    --border: #DEE2E6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900;
+  }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+  .header p  { font-size: 11px; opacity: .8; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.15); border-radius: 20px; padding: 5px 12px;
+    font-size: 11px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+  .dot.live { background: #70AD47; box-shadow: 0 0 0 3px rgba(112,173,71,.3); animation: pulse 2s infinite; }
+  .dot.loading { background: #FFC000; animation: spin-dot 1s linear infinite; }
+  .dot.error { background: #FF0000; }
+  @keyframes pulse { 0%,100%{ box-shadow: 0 0 0 3px rgba(112,173,71,.3); } 50%{ box-shadow: 0 0 0 6px rgba(112,173,71,.1); } }
+  .last-updated { font-size: 10px; opacity: .75; text-align: right; line-height: 1.4; }
+  #refreshBtn {
+    background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.4);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+    transition: background .2s;
+  }
+  #refreshBtn:hover { background: rgba(255,255,255,.32); }
+  #refreshBtn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* FILTERS */
+  .filters-bar {
+    background: #fff; padding: 10px 24px; border-bottom: 2px solid var(--primary-light);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .filters-label { font-weight: 700; font-size: 11px; color: var(--primary); margin-right: 4px; }
+  .filter-group { display: flex; align-items: center; gap: 5px; }
+  .filter-group label { font-weight: 600; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .filter-group select {
+    padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
+    font-size: 12px; background: #fff; cursor: pointer; min-width: 110px; max-width: 155px;
+  }
+  .filter-group select:focus { outline: none; border-color: var(--primary-light); }
+  #clearFilters {
+    background: var(--accent); color: #fff; border: none; padding: 5px 14px;
+    border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; margin-left: auto;
+    white-space: nowrap;
+  }
+  #clearFilters:hover { opacity: .88; }
+
+  /* MAIN */
+  .main { padding: 18px 24px; }
+
+  /* SCORECARDS */
+  .scorecards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .scorecard {
+    background: var(--card); border-radius: 10px; padding: 14px 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08); border-top: 4px solid var(--primary);
+    text-align: center; transition: transform .15s, box-shadow .15s;
+  }
+  .scorecard:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.13); }
+  .scorecard.c-total    { border-top-color: var(--primary); }
+  .scorecard.c-closed   { border-top-color: var(--success); }
+  .scorecard.c-within   { border-top-color: #00B0F0; }
+  .scorecard.c-beyond   { border-top-color: var(--danger); }
+  .scorecard.c-open     { border-top-color: var(--accent); }
+  .scorecard.c-opentat  { border-top-color: #CC0000; }
+  .scorecard.c-avgopen  { border-top-color: var(--warn); }
+  .scorecard.c-avgclose { border-top-color: var(--success); }
+  .scorecard-value { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+  .scorecard.c-closed   .scorecard-value { color: var(--success); }
+  .scorecard.c-within   .scorecard-value { color: #00B0F0; }
+  .scorecard.c-beyond   .scorecard-value { color: var(--danger); }
+  .scorecard.c-open     .scorecard-value { color: var(--accent); }
+  .scorecard.c-opentat  .scorecard-value { color: #CC0000; }
+  .scorecard.c-avgopen  .scorecard-value { color: #B8860B; }
+  .scorecard.c-avgclose .scorecard-value { color: var(--success); }
+  .scorecard-label { font-size: 11px; color: var(--muted); margin-top: 5px; font-weight: 600; line-height: 1.3; }
+  .scorecard-sub   { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+  /* CHARTS */
+  .charts-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 16px; }
+  .charts-grid-bottom { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .chart-card {
+    background: var(--card); border-radius: 10px; padding: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  }
+  .chart-card.span-2 { grid-column: span 2; }
+  .chart-title { font-size: 13px; font-weight: 700; color: var(--primary); text-align: center; margin-bottom: 10px; }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* LOADING OVERLAY */
+  #loadingOverlay {
+    position: fixed; inset: 0; background: rgba(31,78,121,.92);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 999; color: #fff;
+  }
+  .spinner {
+    width: 48px; height: 48px; border: 5px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.9s linear infinite; margin-bottom: 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loadingOverlay h2 { font-size: 18px; margin-bottom: 8px; }
+  #loadingOverlay p  { font-size: 13px; opacity: .8; }
+
+  /* ERROR STATE */
+  #errorState {
+    display: none; position: fixed; inset: 0; background: rgba(31,78,121,.95);
+    flex-direction: column; align-items: center; justify-content: center;
+    z-index: 999; color: #fff; text-align: center; padding: 32px;
+  }
+  #errorState .err-icon { font-size: 52px; margin-bottom: 16px; }
+  #errorState h2 { font-size: 20px; margin-bottom: 10px; }
+  #errorState p  { font-size: 13px; opacity: .85; max-width: 480px; margin-bottom: 20px; line-height: 1.6; }
+  #retryBtn {
+    background: #fff; color: var(--primary); border: none; padding: 10px 28px;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700;
+  }
+
+  /* SETUP NOTICE (admin only strip – hidden once URL is set) */
+  #setupNotice {
+    display: none; background: #FFF3CD; border-left: 4px solid #FFC000;
+    padding: 10px 24px; font-size: 12px; color: #856404;
+  }
+  #setupNotice strong { display: block; margin-bottom: 4px; }
+  #setupNotice code { background: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+  /* FOOTER */
+  .footer {
+    background: var(--primary); color: rgba(255,255,255,.65);
+    text-align: center; padding: 10px; font-size: 11px; margin-top: 8px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .charts-grid, .charts-grid-bottom { grid-template-columns: repeat(2,1fr); }
+    .chart-card.span-2 { grid-column: span 1; }
+  }
+  @media (max-width: 560px) {
+    .charts-grid, .charts-grid-bottom { grid-template-columns: 1fr; }
+    .scorecards { grid-template-columns: repeat(2,1fr); }
+    .header h1 { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     ADMIN CONFIGURATION  ←  Only this section needs editing
+     ══════════════════════════════════════════════════════
+  HOW TO SET UP (one-time, done by admin):
+  1. Open the cleaned Excel in Google Drive → "Open with Google Sheets"
+  2. In Google Sheets: File → Share → Publish to web
+  3. Choose "Hiring Data" sheet → select "Comma-separated values (.csv)"
+  4. Click Publish → copy the URL
+  5. Paste it below as the value of SHEET_CSV_URL
+  6. Host this HTML file anywhere (web server, SharePoint, GitHub Pages, etc.)
+  Viewers simply open the URL — no login, no upload required.
+  Data auto-refreshes every REFRESH_MINUTES minutes.
+═══════════════════════════════════════════════════════ -->
+<script>
+const SHEET_CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0DLMfz2nhuOKTxiVYOPY0Ze-SLcg-F8iJqlB70auYWGBpzD22iZQAkOO4o5afoattAUk1C8jdsB6f/pub?gid=768065580&single=true&output=csv';   // ← PASTE YOUR GOOGLE SHEETS CSV PUBLISH URL HERE
+const REFRESH_MINUTES  = 5;    // Auto-refresh interval (set 0 to disable)
+const FISCAL_YEAR      = 'FY 2026-27';
+</script>
+<!-- ═══════════════════════════════════════════════════ -->
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <h2>Loading Dashboard…</h2>
+  <p>Fetching live data from Google Sheets</p>
+</div>
+
+<!-- ERROR STATE -->
+<div id="errorState">
+  <div class="err-icon">⚠️</div>
+  <h2>Unable to Load Data</h2>
+  <p id="errorMsg">Could not connect to the data source. Please check your internet connection or contact the administrator.</p>
+  <button id="retryBtn" onclick="init()">Try Again</button>
+</div>
+
+<!-- SETUP NOTICE (shown only when URL is not configured) -->
+<div id="setupNotice">
+  <strong>⚙️ Admin Setup Required</strong>
+  Open this HTML file, find <code>const SHEET_CSV_URL = ''</code> and paste your Google Sheets published CSV URL. See the comments above that line for step-by-step instructions.
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">DRF</div>
+    <div>
+      <h1>Hiring Dashboard &nbsp;|&nbsp; <span id="fyLabel"></span></h1>
+      <p>Dr. Reddy's Foundation &nbsp;·&nbsp; HR Analytics</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+    <div class="last-updated">
+      Last updated<br><span id="lastUpdatedTime">—</span>
+    </div>
+    <button id="refreshBtn" onclick="manualRefresh()" title="Refresh data now">⟳ Refresh</button>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <span class="filters-label">🔍 Filters:</span>
+  <div class="filter-group">
+    <label>Program</label>
+    <select id="f_program" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Role</label>
+    <select id="f_role" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Offer Status</label>
+    <select id="f_offer" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Position Status</label>
+    <select id="f_posstatus" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Month</label>
+    <select id="f_month" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Year</label>
+    <select id="f_year" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <button id="clearFilters" onclick="clearFilters()">✕ Clear</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Dr. Reddy's Foundation &nbsp;·&nbsp; Hiring Dashboard <span id="fyFooter"></span>
+  &nbsp;·&nbsp; Data sourced live from Google Sheets &nbsp;·&nbsp; Auto-refreshes every <span id="refreshInfo"></span>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  GLOBALS
+// ═══════════════════════════════════════
+let rawData = [], filteredData = [], charts = {}, refreshTimer = null;
+
+const PALETTE = [
+  '#1F4E79','#2E75B6','#70AD47','#ED7D31','#FFC000',
+  '#C00000','#9B59B6','#00B0F0','#548235','#7030A0',
+  '#00B050','#FF7F50','#4472C4','#C55A11','#843C0C'
+];
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+async function init() {
+  document.getElementById('fyLabel').textContent    = FISCAL_YEAR;
+  document.getElementById('fyFooter').textContent   = FISCAL_YEAR;
+  document.getElementById('refreshInfo').textContent = REFRESH_MINUTES > 0 ? `${REFRESH_MINUTES} min` : 'manually only';
+
+  if (!SHEET_CSV_URL) {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('setupNotice').style.display    = 'block';
+    setStatus('error', 'Not configured');
+    renderEmpty('Admin setup required. See the yellow notice above.');
+    return;
+  }
+  await fetchAndRender();
+  if (REFRESH_MINUTES > 0) {
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(fetchAndRender, REFRESH_MINUTES * 60 * 1000);
+  }
+}
+
+// ═══════════════════════════════════════
+//  FETCH CSV FROM GOOGLE SHEETS
+// ═══════════════════════════════════════
+async function fetchAndRender() {
+  setStatus('loading', 'Refreshing…');
+  document.getElementById('refreshBtn').disabled = true;
+
+  try {
+    // Cache-bust so browsers always fetch the latest version
+    const url = SHEET_CSV_URL + (SHEET_CSV_URL.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+    const csv = await resp.text();
+    rawData = parseCSV(csv);
+    if (!rawData.length) throw new Error('Sheet appears to be empty');
+
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('errorState').style.display     = 'none';
+    document.getElementById('lastUpdatedTime').textContent  =
+      new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    setStatus('live', `Live · ${rawData.length} records`);
+    populateFilters();
+    applyFilters();
+  } catch (err) {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('errorMsg').textContent =
+      `Error: ${err.message}. Please check that the Google Sheets publish URL is correct and the sheet is publicly accessible.`;
+    document.getElementById('errorState').style.display = 'flex';
+    setStatus('error', 'Connection error');
+  }
+  document.getElementById('refreshBtn').disabled = false;
+}
+
+function manualRefresh() { fetchAndRender(); }
+
+// ═══════════════════════════════════════
+//  CSV PARSER
+// ═══════════════════════════════════════
+function parseCSV(csv) {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  // Robust CSV split respecting quoted fields
+  function splitLine(line) {
+    const fields = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    fields.push(cur.trim());
+    return fields;
+  }
+
+  const headers = splitLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+
+  return lines.slice(1).map(line => {
+    const vals = splitLine(line).map(v => v.replace(/^"|"$/g, '').trim());
+    const row = {};
+    headers.forEach((h, i) => row[h] = vals[i] || '');
+    return row;
+  }).filter(r => r['S. No.'] && r['S. No.'] !== '').map(r => {
+    const posStatus     = (r['Position Status'] || '').trim();
+    const tatOffer      = parseFloat(r['TAT: Indent → Offer (Calc)']) || null;
+    const tatJoining    = parseFloat(r['TAT: Indent → Joining (Calc)']) || null;
+    const daysOpen      = parseFloat(r['Days Position Open (Calc)']) || null;
+    const targetTAT     = parseFloat(r['Target TAT Days']) || 30;
+
+    // Compute TAT Status if sheet column is empty
+    let tatStatusOffer = (r['TAT Status - Offer'] || '').trim();
+    if (!tatStatusOffer && tatOffer !== null) {
+      tatStatusOffer = tatOffer <= targetTAT ? 'Within TAT' : 'Delayed';
+    }
+
+    // Extract month/year from "Apr-2026" format
+    const indentMonthFull = r['Indent Month'] || '';
+    let indentMonth = '', indentYear = '';
+    if (indentMonthFull) {
+      const parts = indentMonthFull.split('-');
+      indentMonth = parts[0] || '';
+      indentYear  = parts[1] || '';
+    }
+
+    return {
+      sno:           r['S. No.'],
+      program:       (r['Program Name'] || '').trim(),
+      role:          (r['Position / Role'] || '').trim(),
+      posStatus,
+      offerStatus:   (r['Offer Status'] || '').trim(),
+      joiningStatus: (r['Joining Status'] || '').trim(),
+      tatStatusOffer,
+      tatOffer, tatJoining, daysOpen, targetTAT,
+      indentMonth, indentYear,
+    };
+  });
+}
+
+// ═══════════════════════════════════════
+//  STATUS DOT
+// ═══════════════════════════════════════
+function setStatus(type, text) {
+  const dot  = document.getElementById('statusDot');
+  const span = document.getElementById('statusText');
+  dot.className = 'dot ' + (type === 'live' ? 'live' : type === 'loading' ? 'loading' : 'error');
+  span.textContent = text;
+}
+
+// ═══════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════
+function populateFilters() {
+  const uniq = fn => [...new Set(rawData.map(fn).filter(Boolean))].sort();
+  fillSelect('f_program',   uniq(r => r.program));
+  fillSelect('f_role',      uniq(r => r.role));
+  fillSelect('f_offer',     uniq(r => r.offerStatus || null));
+  fillSelect('f_posstatus', uniq(r => r.posStatus   || null));
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = [...new Set(rawData.map(r => r.indentMonth).filter(Boolean))];
+  months.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+  fillSelect('f_month', months);
+  fillSelect('f_year', [...new Set(rawData.map(r => r.indentYear).filter(Boolean))].sort());
+}
+
+function fillSelect(id, opts) {
+  const sel = document.getElementById(id);
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">All</option>';
+  opts.forEach(o => {
+    const el = document.createElement('option');
+    el.value = el.textContent = o;
+    sel.appendChild(el);
+  });
+  if (opts.includes(prev)) sel.value = prev;
+}
+
+function applyFilters() {
+  const fP = document.getElementById('f_program').value;
+  const fR = document.getElementById('f_role').value;
+  const fO = document.getElementById('f_offer').value;
+  const fS = document.getElementById('f_posstatus').value;
+  const fM = document.getElementById('f_month').value;
+  const fY = document.getElementById('f_year').value;
+
+  filteredData = rawData.filter(r =>
+    (!fP || r.program     === fP) &&
+    (!fR || r.role        === fR) &&
+    (!fO || r.offerStatus === fO) &&
+    (!fS || r.posStatus   === fS) &&
+    (!fM || r.indentMonth === fM) &&
+    (!fY || r.indentYear  === fY)
+  );
+  renderDashboard();
+}
+
+function clearFilters() {
+  ['f_program','f_role','f_offer','f_posstatus','f_month','f_year']
+    .forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+// ═══════════════════════════════════════
+//  SCORECARDS
+// ═══════════════════════════════════════
+function computeScores(data) {
+  const totalIndent   = data.length;
+  const totalClosed   = data.filter(r => r.posStatus === 'Closed').length;
+  const withOffer     = data.filter(r => r.tatOffer !== null);
+  const withinTAT     = withOffer.filter(r => r.posStatus === 'Closed' && r.tatOffer <= r.targetTAT).length;
+  const beyondTAT     = withOffer.filter(r => r.posStatus === 'Closed' && r.tatOffer >  r.targetTAT).length;
+  const totalOpen     = data.filter(r => r.posStatus !== 'Closed').length;
+  const openBeyondTAT = data.filter(r => r.posStatus !== 'Closed' && r.daysOpen !== null && r.daysOpen > r.targetTAT).length;
+  const avgFn         = arr => { const v = arr.filter(x => x !== null && !isNaN(x)); return v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length) : 0; };
+  const avgOpenTAT    = avgFn(data.filter(r => r.posStatus !== 'Closed' && r.daysOpen !== null).map(r => r.daysOpen));
+  const avgClosedTAT  = avgFn(withOffer.map(r => r.tatOffer));
+  return { totalIndent, totalClosed, withinTAT, beyondTAT, totalOpen, openBeyondTAT, avgOpenTAT, avgClosedTAT };
+}
+
+// ═══════════════════════════════════════
+//  RENDER DASHBOARD
+// ═══════════════════════════════════════
+function renderEmpty(msg) {
+  document.getElementById('mainContent').innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:#6c757d;">
+      <div style="font-size:48px;margin-bottom:12px;">🔍</div>
+      <h3 style="color:#1F4E79;margin-bottom:6px;">${msg}</h3>
+    </div>`;
+}
+
+function renderDashboard() {
+  const data = filteredData;
+  if (!data.length) { renderEmpty('No data matches the selected filters.'); return; }
+
+  const sc = computeScores(data);
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="scorecards">
+      <div class="scorecard c-total">
+        <div class="scorecard-value">${sc.totalIndent}</div>
+        <div class="scorecard-label">Total Indent</div>
+        <div class="scorecard-sub">Positions raised</div>
+      </div>
+      <div class="scorecard c-closed">
+        <div class="scorecard-value">${sc.totalClosed}</div>
+        <div class="scorecard-label">Total Closed</div>
+        <div class="scorecard-sub">Positions filled</div>
+      </div>
+      <div class="scorecard c-within">
+        <div class="scorecard-value">${sc.withinTAT}</div>
+        <div class="scorecard-label">Closed Within TAT</div>
+        <div class="scorecard-sub">On-time closures</div>
+      </div>
+      <div class="scorecard c-beyond">
+        <div class="scorecard-value">${sc.beyondTAT}</div>
+        <div class="scorecard-label">Closed Beyond TAT</div>
+        <div class="scorecard-sub">Delayed closures</div>
+      </div>
+      <div class="scorecard c-open">
+        <div class="scorecard-value">${sc.totalOpen}</div>
+        <div class="scorecard-label">Total Open</div>
+        <div class="scorecard-sub">Still in pipeline</div>
+      </div>
+      <div class="scorecard c-opentat">
+        <div class="scorecard-value">${sc.openBeyondTAT}</div>
+        <div class="scorecard-label">Open Beyond TAT</div>
+        <div class="scorecard-sub">Overdue open roles</div>
+      </div>
+      <div class="scorecard c-avgopen">
+        <div class="scorecard-value">${sc.avgOpenTAT}<span style="font-size:13px;font-weight:400"> d</span></div>
+        <div class="scorecard-label">Avg Open TAT</div>
+        <div class="scorecard-sub">Days open positions</div>
+      </div>
+      <div class="scorecard c-avgclose">
+        <div class="scorecard-value">${sc.avgClosedTAT}<span style="font-size:13px;font-weight:400"> d</span></div>
+        <div class="scorecard-label">Avg Closed TAT</div>
+        <div class="scorecard-sub">Indent → Offer (where offered)</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Hiring Status Overview</div><div class="chart-wrap"><canvas id="ch_status"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Program-wise Hiring</div><div class="chart-wrap"><canvas id="ch_program"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Role-wise Hiring</div><div class="chart-wrap"><canvas id="ch_role"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">TAT Performance</div><div class="chart-wrap"><canvas id="ch_tat"></canvas></div></div>
+    </div>
+    <div class="charts-grid-bottom">
+      <div class="chart-card span-2"><div class="chart-title">Offer Status Overview</div><div class="chart-wrap"><canvas id="ch_offer"></canvas></div></div>
+      <div class="chart-card span-2"><div class="chart-title">Joining Status Overview</div><div class="chart-wrap"><canvas id="ch_joining"></canvas></div></div>
+    </div>`;
+
+  Object.values(charts).forEach(c => c.destroy()); charts = {};
+
+  // 1. Hiring Status
+  renderDonut('ch_status', countBy(data, r => r.posStatus || 'Open (Unset)'), {
+    colorMap: { 'Closed':'#70AD47','Open (Unset)':'#2E75B6','On Hold':'#FFC000' }
+  });
+
+  // 2. Program-wise
+  renderDonut('ch_program', countBy(data, r => r.program));
+
+  // 3. Role-wise
+  renderDonut('ch_role', countBy(data, r => r.role));
+
+  // 4. TAT Performance (among positions with offers)
+  const tatBuckets = {};
+  data.filter(r => r.tatOffer !== null).forEach(r => {
+    const k = r.posStatus === 'Closed'
+      ? (r.tatOffer <= r.targetTAT ? 'Within TAT' : 'Delayed')
+      : 'Open / In Progress';
+    tatBuckets[k] = (tatBuckets[k] || 0) + 1;
+  });
+  const noOffer = data.filter(r => r.tatOffer === null && r.posStatus !== 'Closed').length;
+  if (noOffer) tatBuckets['In Pipeline'] = noOffer;
+  renderDonut('ch_tat', tatBuckets, {
+    colorMap: { 'Within TAT':'#70AD47','Delayed':'#FF0000','Open / In Progress':'#2E75B6','In Pipeline':'#FFC000' }
+  });
+
+  // 5. Offer Status
+  const offerMap = countBy(data, r => r.offerStatus || null);
+  if (!Object.keys(offerMap).length) offerMap['No Offer Yet'] = data.length;
+  renderDonut('ch_offer', offerMap, {
+    colorMap: { 'Accepted':'#70AD47','Declined':'#FF0000','No Offer Yet':'#BFBFBF','Pending':'#FFC000' }
+  });
+
+  // 6. Joining Status
+  const joinMap = countBy(data, r => r.joiningStatus || null);
+  if (!Object.keys(joinMap).length) joinMap['Not Yet'] = data.length;
+  renderDonut('ch_joining', joinMap, {
+    colorMap: { 'Joined':'#70AD47','Not Joined':'#FF0000','Not Yet':'#BFBFBF' }
+  });
+
+}
+
+// ═══════════════════════════════════════
+//  DONUT HELPER
+// ═══════════════════════════════════════
+function countBy(data, fn) {
+  const out = {};
+  data.forEach(r => { const k = fn(r); if (k) out[k] = (out[k] || 0) + 1; });
+  return out;
+}
+
+function renderDonut(id, countsObj, opts = {}) {
+  const labels = Object.keys(countsObj);
+  const values = Object.values(countsObj);
+  const total  = values.reduce((a, b) => a + b, 0);
+  const colors = labels.map((l, i) => (opts.colorMap && opts.colorMap[l]) ? opts.colorMap[l] : PALETTE[i % PALETTE.length]);
+
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { font: { family: 'Arial', size: 10 }, boxWidth: 12, padding: 8 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? ((ctx.raw/total)*100).toFixed(1) : 0}%)`
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      beforeDraw(chart) {
+        const { ctx, chartArea: { top, bottom, left, right } } = chart;
+        const cx = (left+right)/2, cy = (top+bottom)/2;
+        ctx.save();
+        ctx.font = 'bold 18px Arial'; ctx.fillStyle = '#1F4E79';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(total, cx, cy - 8);
+        ctx.font = '10px Arial'; ctx.fillStyle = '#888';
+        ctx.fillText('Total', cx, cy + 10);
+        ctx.restore();
+      }
+    }, {
+      id: 'sliceLabels',
+      afterDatasetDraw(chart) {
+        const { ctx } = chart;
+        chart.getDatasetMeta(0).data.forEach((arc, i) => {
+          const pct = total ? (chart.data.datasets[0].data[i] / total) * 100 : 0;
+          if (pct < 5) return;
+          const angle = (arc.startAngle + arc.endAngle) / 2;
+          const r = (arc.outerRadius + arc.innerRadius) / 2;
+          const x = arc.x + r * Math.cos(angle), y = arc.y + r * Math.sin(angle);
+          ctx.save();
+          ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(pct.toFixed(1) + '%', x, y);
+          ctx.restore();
+        });
+      }
+    }]
+  });
+}
+
+// ═══════════════════════════════════════
+//  START
+// ═══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
