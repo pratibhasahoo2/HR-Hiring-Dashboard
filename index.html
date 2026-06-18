@@ -91,6 +91,35 @@
   .filter-group select:focus, .filter-group input[type="date"]:focus {
     border-color: var(--blue-mid); background: #fff;
   }
+
+  /* ── MULTI-SELECT DROPDOWN ── */
+  .ms-wrap { position: relative; min-width: 150px; }
+  .ms-btn {
+    width: 100%; border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font-size: 13px; color: var(--text);
+    background: var(--bg); outline: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; text-align: left; transition: border-color .2s;
+    white-space: nowrap; overflow: hidden;
+  }
+  .ms-btn:hover, .ms-btn:focus { border-color: var(--blue-mid); background: #fff; }
+  .ms-label { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .ms-caret { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .ms-panel {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0;
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(31,56,100,.15); min-width: 100%;
+    max-height: 220px; overflow-y: auto; z-index: 500; padding: 6px 0;
+  }
+  .ms-panel.open { display: block; }
+  .ms-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px; cursor: pointer; font-size: 13px; color: var(--text);
+    user-select: none;
+  }
+  .ms-option:hover { background: var(--bg); }
+  .ms-option input[type=checkbox] { cursor: pointer; accent-color: var(--blue-mid); width: 14px; height: 14px; flex-shrink: 0; }
+
   .period-group { display: flex; flex-direction: column; gap: 4px; }
   .period-group label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .period-inputs { display: flex; align-items: center; gap: 8px; }
@@ -106,9 +135,22 @@
   .main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
 
   /* ── SCORECARDS ── */
-  .scorecards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-  @media(max-width:1100px){ .scorecards{grid-template-columns:repeat(2,1fr);} }
-  @media(max-width:600px){ .scorecards{grid-template-columns:1fr;} }
+  .sc-group { margin-bottom: 4px; }
+  .sc-group-label {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 12px 0 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sc-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  /* 4-col group: On Hold + Closed metrics */
+  .scorecards-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 4px; }
+  /* 3-col group: Offer TAT / Joining TAT */
+  .scorecards-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 4px; }
+  /* 5-col group: Open & General */
+  .scorecards-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media(max-width:1200px){ .scorecards-5{grid-template-columns:repeat(3,1fr);} }
+  @media(max-width:1100px){ .scorecards-4{grid-template-columns:repeat(2,1fr);} .scorecards-3{grid-template-columns:repeat(3,1fr);} }
 
   .scorecard {
     background: var(--card); border-radius: 10px; padding: 18px 20px;
@@ -131,6 +173,17 @@
   .scorecard.red::after    { background: #FAD7D7; }
   .scorecard.amber::after  { background: #FFF3CD; }
   .scorecard.teal::after   { background: #D0EEEE; }
+  /* Highlight card for Total Indent */
+  .scorecard.highlight {
+    background: linear-gradient(135deg, #1F3864 0%, #2E75B6 100%);
+    border-left: 4px solid #90C8F0;
+  }
+  .scorecard.highlight .sc-label { color: rgba(255,255,255,.70); }
+  .scorecard.highlight .sc-value { color: #fff; }
+  .scorecard.highlight .sc-sub   { color: rgba(255,255,255,.55); }
+  .scorecard.highlight .sc-drill { color: #90C8F0; }
+  .scorecard.highlight::after    { background: rgba(255,255,255,.08); opacity: 1; }
+  .scorecard.highlight:hover     { box-shadow: 0 6px 20px rgba(31,56,100,.35); }
 
   .sc-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; position: relative; z-index: 1; }
   .sc-value { font-size: 34px; font-weight: 700; color: var(--text); line-height: 1; position: relative; z-index: 1; }
@@ -258,10 +311,11 @@
     .main { padding: 14px 12px; }
 
     /* Scorecards */
-    .scorecards { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .scorecards-4, .scorecards-3, .scorecards-5 { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 8px; }
     .scorecard { padding: 14px 14px; }
     .sc-value { font-size: 26px; }
     .sc-label { font-size: 11px; }
+    .sc-group-label { margin: 8px 0 6px; font-size: 9px; }
 
     /* Charts */
     .charts-grid { gap: 14px; margin-bottom: 16px; }
@@ -283,7 +337,7 @@
   }
 
   @media(max-width:400px){
-    .scorecards { grid-template-columns: 1fr; }
+    .scorecards-4, .scorecards-3, .scorecards-5 { grid-template-columns: 1fr; }
     .header-title { font-size: 14px; }
     .sc-value { font-size: 28px; }
   }
@@ -294,7 +348,9 @@
     .filter-bar, .btn-refresh, .btn-download-header, .modal-overlay,
     .loading-overlay, .sc-drill, .live-dot, .status-text { display: none !important; }
     .main { padding: 8px; }
-    .scorecards { grid-template-columns: repeat(4,1fr); }
+    .scorecards-4 { grid-template-columns: repeat(4,1fr); }
+    .scorecards-3 { grid-template-columns: repeat(3,1fr); }
+    .scorecards-5 { grid-template-columns: repeat(5,1fr); }
     .charts-grid { grid-template-columns: 1fr 1fr; break-inside: avoid; }
     .chart-card { box-shadow: none; border: 1px solid var(--border); break-inside: avoid; }
     body { background: #fff; }
@@ -330,7 +386,13 @@
 <div class="filter-bar">
   <div class="filter-group">
     <label>Role</label>
-    <select id="fRole" onchange="applyFilters()"><option value="">All Roles</option></select>
+    <div class="ms-wrap" id="msRole">
+      <button class="ms-btn" type="button" onclick="toggleMS('msRole')">
+        <span class="ms-label" id="msRoleLabel">All Roles</span>
+        <span class="ms-caret">▾</span>
+      </button>
+      <div class="ms-panel" id="msRolePanel"></div>
+    </div>
   </div>
   <div class="filter-group">
     <label>Offer Status</label>
@@ -338,11 +400,23 @@
   </div>
   <div class="filter-group">
     <label>Position Status</label>
-    <select id="fPositionStatus" onchange="applyFilters()"><option value="">All</option></select>
+    <div class="ms-wrap" id="msPositionStatus">
+      <button class="ms-btn" type="button" onclick="toggleMS('msPositionStatus')">
+        <span class="ms-label" id="msPositionStatusLabel">All</span>
+        <span class="ms-caret">▾</span>
+      </button>
+      <div class="ms-panel" id="msPositionStatusPanel"></div>
+    </div>
   </div>
   <div class="filter-group">
     <label>Program</label>
-    <select id="fProgram" onchange="applyFilters()"><option value="">All Programs</option></select>
+    <div class="ms-wrap" id="msProgram">
+      <button class="ms-btn" type="button" onclick="toggleMS('msProgram')">
+        <span class="ms-label" id="msProgramLabel">All Programs</span>
+        <span class="ms-caret">▾</span>
+      </button>
+      <div class="ms-panel" id="msProgramPanel"></div>
+    </div>
   </div>
   <div class="period-group">
     <label>Period (Indent Date)</label>
@@ -369,10 +443,11 @@
 <!-- ═══════════════ MAIN ═══════════════ -->
 <div class="main" id="mainContent" style="display:none;">
 
-  <!-- Scorecards -->
-  <div class="scorecards">
-    <div class="scorecard" onclick="showDetail('all')">
-      <div class="sc-label">Total Indent</div>
+  <!-- ── ROW 1: Key Metrics (5 cards) ── -->
+  <div class="sc-group-label">Key Metrics</div>
+  <div class="scorecards-5">
+    <div class="scorecard highlight" onclick="showDetail('all')">
+      <div class="sc-label">Total Indents Raised</div>
       <div class="sc-value" id="scTotal">–</div>
       <div class="sc-sub">All positions raised</div>
       <div class="sc-drill">View details →</div>
@@ -380,21 +455,32 @@
     <div class="scorecard green" onclick="showDetail('closed')">
       <div class="sc-label">Total Closed</div>
       <div class="sc-value" id="scClosed">–</div>
-      <div class="sc-sub">Position Status = Closed</div>
+      <div class="sc-sub">Indent → Position Closed</div>
       <div class="sc-drill">View details →</div>
     </div>
     <div class="scorecard green" onclick="showDetail('withinTAT')">
       <div class="sc-label">Closed Within TAT</div>
       <div class="sc-value" id="scWithinTAT">–</div>
-      <div class="sc-sub">TAT Status: Within TAT</div>
+      <div class="sc-sub">TAT Status – Closed: Within TAT</div>
       <div class="sc-drill">View details →</div>
     </div>
     <div class="scorecard red" onclick="showDetail('beyondTAT')">
       <div class="sc-label">Closed Beyond TAT</div>
       <div class="sc-value" id="scBeyondTAT">–</div>
-      <div class="sc-sub">TAT Status: Beyond TAT (Closed)</div>
+      <div class="sc-sub">TAT Status – Closed: Beyond TAT</div>
       <div class="sc-drill">View details →</div>
     </div>
+    <div class="scorecard" onclick="showDetail('avgClosed')">
+      <div class="sc-label">Avg Closed TAT</div>
+      <div class="sc-value" id="scAvgClosed">–</div>
+      <div class="sc-sub">Avg days · Indent → Closed</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: Open & Hold Metrics (5 cards) ── -->
+  <div class="sc-group-label">Open &amp; Hold Metrics</div>
+  <div class="scorecards-5">
     <div class="scorecard teal" onclick="showDetail('open')">
       <div class="sc-label">Total Open</div>
       <div class="sc-value" id="scOpen">–</div>
@@ -404,55 +490,92 @@
     <div class="scorecard amber" onclick="showDetail('openBeyond')">
       <div class="sc-label">Open Beyond TAT</div>
       <div class="sc-value" id="scOpenBeyond">–</div>
-      <div class="sc-sub">TAT Status: Open – Delayed</div>
+      <div class="sc-sub">TAT Status – Closed: Open – Delayed</div>
       <div class="sc-drill">View details →</div>
     </div>
     <div class="scorecard" onclick="showDetail('avgOpen')">
-      <div class="sc-label">Avg Open TAT</div>
+      <div class="sc-label">Avg Open (Beyond TAT)</div>
       <div class="sc-value" id="scAvgOpen">–</div>
-      <div class="sc-sub">Days position open (Open positions)</div>
+      <div class="sc-sub">Avg days open · Open positions beyond TAT</div>
       <div class="sc-drill">View details →</div>
     </div>
-    <div class="scorecard" onclick="showDetail('avgClosed')">
-      <div class="sc-label">Avg Closed TAT</div>
-      <div class="sc-value" id="scAvgClosed">–</div>
-      <div class="sc-sub">Days Indent → Offer release</div>
+    <div class="scorecard amber" onclick="showDetail('onHold')">
+      <div class="sc-label">On Hold</div>
+      <div class="sc-value" id="scOnHoldCount">–</div>
+      <div class="sc-sub">Position Status = On Hold (count)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard" onclick="showDetail('avgOnHold')">
+      <div class="sc-label">Avg On Hold</div>
+      <div class="sc-value" id="scAvgOnHold">–</div>
+      <div class="sc-sub">Avg days · Indent → On Hold</div>
       <div class="sc-drill">View details →</div>
     </div>
   </div>
 
-  <!-- Charts Row 1: Hiring Status + TAT Performance -->
-  <div class="section-title">Hiring Overview</div>
+  <!-- ── ROW 3: Offer & Joinings (4 cards + 1 spacer for uniform width) ── -->
+  <div class="sc-group-label">Offer &amp; Joinings</div>
+  <div class="scorecards-5">
+    <div class="scorecard teal" onclick="showDetail('tatIndOffer')">
+      <div class="sc-label">Indent → Offer Release</div>
+      <div class="sc-value" id="scTatIndOffer">–</div>
+      <div class="sc-sub">Avg days · Indent → Offer (with offer)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard teal" onclick="showDetail('tatIndJoined')">
+      <div class="sc-label">Indent → Actual Joining</div>
+      <div class="sc-value" id="scTatIndJoined">–</div>
+      <div class="sc-sub">Avg days · Indent → Joining (Joined)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard" onclick="showDetail('tatExpDOJOffer')">
+      <div class="sc-label">Indent → Exp. DOJ (Offered)</div>
+      <div class="sc-value" id="scTatExpDOJOffer">–</div>
+      <div class="sc-sub">Avg days · Indent → Expected DOJ (offer released)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <div class="scorecard amber" onclick="showDetail('tatAgingNoOffer')">
+      <div class="sc-label">Offer not released</div>
+      <div class="sc-value" id="scTatAgingNoOffer">–</div>
+      <div class="sc-sub">Avg days · Indent → Closed (offer not released)</div>
+      <div class="sc-drill">View details →</div>
+    </div>
+    <!-- Invisible spacer — keeps card widths identical to other rows -->
+    <div class="scorecard" aria-hidden="true" style="visibility:hidden;pointer-events:none;box-shadow:none;background:transparent;border:none;"></div>
+  </div>
+
+  <!-- Charts Row 1: Hiring Status + Indent Raised Month-wise -->
+  <div class="section-title">Overview</div>
   <div class="charts-grid" style="margin-bottom:20px;">
     <div class="chart-card">
       <div class="chart-title">Hiring Status Overview</div>
       <div class="chart-container"><canvas id="chartHiringStatus"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">TAT Performance</div>
-      <div class="chart-container"><canvas id="chartTAT"></canvas></div>
+      <div class="chart-title">Indent Raised – Month-wise</div>
+      <div class="chart-container"><canvas id="chartIndentMonth"></canvas></div>
     </div>
   </div>
 
-  <!-- Charts Row 2: Role-wise + Offer Status -->
-  <div class="section-title">Role &amp; Offer Analysis</div>
+  <!-- Charts Row 2: Position Closed Month-wise + Month-wise Joining (trendlines) -->
+  <div class="section-title">Closing &amp; Joining Trends</div>
   <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card">
+      <div class="chart-title">Position Closed – Month-wise</div>
+      <div class="chart-container"><canvas id="chartClosedMonth"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Joining - Month-wise</div>
+      <div class="chart-container"><canvas id="chartJoiningMonth"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 3: Role-wise + Program-wise -->
+  <div class="section-title">Role &amp; Program Analysis</div>
+  <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-title">Role-wise Hiring</div>
       <div class="chart-container"><canvas id="chartRole"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Offer Status Overview</div>
-      <div class="chart-container"><canvas id="chartOfferStatus"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Charts Row 3: Joining Status + Program-wise -->
-  <div class="section-title">Joining &amp; Program Distribution</div>
-  <div class="charts-grid">
-    <div class="chart-card">
-      <div class="chart-title">Joining Status</div>
-      <div class="chart-container"><canvas id="chartJoining"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Program-wise Hiring</div>
@@ -487,10 +610,15 @@
             <th>Role</th>
             <th>Candidate Name</th>
             <th>Indent Date</th>
+            <th>Pos. Closed Date</th>
             <th>Offer Release Date</th>
             <th>Joining Date</th>
             <th>Position Status</th>
             <th>Offer Status</th>
+            <th>TAT: Closed (d)</th>
+            <th>TAT: Offer (d)</th>
+            <th>TAT: Joining (d)</th>
+            <th>TAT Status – Closed</th>
             <th>TAT Status – Offer</th>
             <th>TAT Status – Joining</th>
             <th>Days Open</th>
@@ -511,45 +639,52 @@ const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/18iBus8OtRl86N9fva
 const REFRESH_MINUTES = 5;
 
 /* ═══════════════════════════════════════
-   COLUMN INDEX MAP (0-based)
-   Based on 31-column cleaned sheet:
+   COLUMN INDEX MAP (0-based) — 38-column sheet (updated Jun-2026)
+   38-column sheet (Jun-2026 — col Y and col AJ added):
    A=0  B=1  C=2  D=3  E=4  F=5  G=6  H=7  I=8
    J=9  K=10 L=11 M=12 N=13 O=14 P=15 Q=16 R=17
    S=18 T=19 U=20 V=21 W=22 X=23 Y=24 Z=25 AA=26
-   AB=27 AC=28 AD=29 AE=30
+   AB=27 AC=28 AD=29 AE=30 AF=31 AG=32 AH=33 AI=34 AJ=35 AK=36 AL=37
 ═══════════════════════════════════════ */
 const COL = {
-  sno:          0,   // S. No.
-  indentBy:     1,   // Indent Raised By
-  centre:       2,   // Centre / Location
-  project:      3,   // Project Name
-  program:      4,   // Program Name
-  role:         5,   // Position / Role
-  posType:      6,   // Position Type
-  indentDate:   7,   // Indent Final Approved Date  (H)
-  recruiter:    8,   // Recruiter (HR) Name
-  candidate:    9,   // Candidate Name
-  source:       10,  // Source of Hire
-  posStatus:    11,  // Position Status              (L)
-  closedDate:   12,  // Position Closed Date
-  offerDate:    13,  // Offer Release Date           (N)
-  offerStatus:  14,  // Offer Status                 (O) ← per user req
-  offerAccept:  15,  // Offer Acceptance Date
-  expJoinDate:  16,  // Expected Date of Joining
-  actJoinDate:  17,  // Actual Date of Joining
-  joinStatus:   18,  // Joining Status               (S)
-  targetTAT:    19,  // Target TAT Days              (T)
-  tatOffer:     20,  // TAT: Indent→Offer Calc       (U)
-  tatJoining:   21,  // TAT: Indent→Joining Calc     (V)
-  daysOpen:     22,  // Days Position Open Calc      (W)
-  tatStatOffer: 23,  // TAT Status – Offer           (X) ← main metric
-  tatStatJoin:  24,  // TAT Status – Joining         (Y)
-  delayOffer:   25,  // Delay Days – Offer           (Z)
-  delayJoin:    26,  // Delay Days – Joining         (AA)
-  ageing:       27,  // Ageing Bucket                (AB)
-  indentMonth:  28,  // Indent Month
-  offerMonth:   29,  // Offer Month
-  joinMonth:    30,  // Joining Month
+  sno:              0,  // A:  S. No.
+  indentBy:         1,  // B:  Indent Raised By
+  centre:           2,  // C:  Centre / Location
+  project:          3,  // D:  Project Name
+  program:          4,  // E:  Program Name
+  role:             5,  // F:  Position / Role
+  posType:          6,  // G:  Position Type
+  indentDate:       7,  // H:  Indent Final Approved Date
+  recruiter:        8,  // I:  Recruiter (HR) Name
+  candidate:        9,  // J:  Candidate Name
+  source:           10, // K:  Source of Hire
+  posStatus:        11, // L:  Position Status
+  onHoldDate:       12, // M:  On Hold Date
+  closedDate:       13, // N:  Position Closed Date
+  offerStatus:      14, // O:  Offer Status             ← swapped (was col P)
+  offerDate:        15, // P:  Offer Release Date       ← swapped (was col O)
+  offerAccept:      16, // Q:  Offer Acceptance / Decline Date
+  expJoinDate:      17, // R:  Expected Date of Joining
+  actJoinDate:      18, // S:  Actual Date of Joining
+  joinStatus:       19, // T:  Joining Status
+  exemption:        20, // U:  Exemption (No of days)
+  targetTAT:        21, // V:  Target TAT Days
+  tatOnHold:        22, // W:  Indent → On Hold (Calc)
+  tatClosed:        23, // X:  TAT: Indent → Closed (Calc)
+  tatClosedNoOffer: 24, // Y:  Indent → Closed but offer not released [NEW]
+  tatOffer:         25, // Z:  TAT: Indent → Offer (Calc)
+  tatJoining:       26, // AA: TAT: Indent → Joining (Calc)
+  daysOpen:         27, // AB: Days Position Open (Calc)
+  tatStatClosed:    28, // AC: TAT Status – Closed
+  tatStatOffer:     29, // AD: TAT Status – Offer
+  tatStatJoin:      30, // AE: TAT Status – Joining
+  delayOffer:       31, // AF: Delay Days – Offer
+  delayJoin:        32, // AG: Delay Days – Joining
+  ageing:           33, // AH: Ageing Bucket
+  indentMonth:      34, // AI: Indent Month
+  closedMonth:      35, // AJ: Position Closed Month   [NEW]
+  offerMonth:       36, // AK: Offer Month
+  joinMonth:        37, // AL: Joining Month
 };
 
 /* ═══════════════════════════════════════
@@ -559,6 +694,7 @@ let allData = [];      // all parsed rows
 let filteredData = []; // rows after filter
 let charts = {};       // chart instances
 let lastDrillFilter = 'all';
+let filtersInitialized = false; // true after first successful data load
 
 /* ═══════════════════════════════════════
    CSV PARSER (handles quoted fields)
@@ -619,7 +755,8 @@ async function fetchData() {
     }
 
     allData = data;
-    populateFilters();
+    populateFilters(filtersInitialized); // preserve selections on refresh
+    filtersInitialized = true;
     applyFilters();
     document.getElementById('mainContent').style.display = '';
     document.getElementById('liveDot').style.display = '';
@@ -637,38 +774,98 @@ async function fetchData() {
 function unique(arr) {
   return [...new Set(arr.filter(v => v && v !== 'NA' && v !== '#N/A'))].sort();
 }
-function populateFilters() {
-  fillSelect('fRole',           unique(allData.map(r => r[COL.role])));
-  fillSelect('fOfferStatus',    unique(allData.map(r => r[COL.offerStatus])));
-  fillSelect('fPositionStatus', unique(allData.map(r => r[COL.posStatus])));
-  fillSelect('fProgram',        unique(allData.map(r => r[COL.program])));
+function populateFilters(preserve) {
+  // Save current selections before rebuilding checkboxes
+  const saved = preserve ? {
+    roles:    getMS('msRole'),
+    statuses: getMS('msPositionStatus'),
+    programs: getMS('msProgram'),
+    offer:    document.getElementById('fOfferStatus').value,
+    dateFrom: document.getElementById('fDateFrom').value,
+    dateTo:   document.getElementById('fDateTo').value,
+  } : null;
+
+  fillMultiSelect('msRole',           unique(allData.map(r => r[COL.role])));
+  // Offer Status: only show the two known values; stays as regular dropdown
+  const OFFER_STATUS_OPTS = ['Offer Released', 'Documentation in progress'];
+  fillSelect('fOfferStatus', OFFER_STATUS_OPTS);
+  fillMultiSelect('msPositionStatus', unique(allData.map(r => r[COL.posStatus])));
+  fillMultiSelect('msProgram',        unique(allData.map(r => r[COL.program])));
+
+  // Restore prior selections on refresh
+  if (saved) {
+    restoreMS('msRole',           saved.roles);
+    restoreMS('msPositionStatus', saved.statuses);
+    restoreMS('msProgram',        saved.programs);
+    if (saved.offer)    document.getElementById('fOfferStatus').value = saved.offer;
+    if (saved.dateFrom) document.getElementById('fDateFrom').value    = saved.dateFrom;
+    if (saved.dateTo)   document.getElementById('fDateTo').value      = saved.dateTo;
+    updateMSLabel('msRole',           'All Roles');
+    updateMSLabel('msPositionStatus', 'All');
+    updateMSLabel('msProgram',        'All Programs');
+  }
+}
+function restoreMS(id, values) {
+  if (!values || !values.length) return;
+  document.querySelectorAll('#' + id + 'Panel input').forEach(cb => {
+    if (values.includes(cb.value)) cb.checked = true;
+  });
 }
 function fillSelect(id, options) {
   const sel = document.getElementById(id);
   const cur = sel.value;
-  const labels = {
-    fRole: 'All Roles', fOfferStatus: 'All', fPositionStatus: 'All', fProgram: 'All Programs'
-  };
-  sel.innerHTML = `<option value="">${labels[id]||'All'}</option>` +
+  sel.innerHTML = `<option value="">All</option>` +
     options.map(o => `<option value="${escHtml(o)}"${o===cur?' selected':''}>${escHtml(o)}</option>`).join('');
+}
+function fillMultiSelect(id, options) {
+  const panel = document.getElementById(id + 'Panel');
+  if (!panel) return;
+  panel.innerHTML = options.map(o =>
+    `<label class="ms-option">
+      <input type="checkbox" value="${escHtml(o)}" onchange="applyFilters()">
+      ${escHtml(o)}
+    </label>`
+  ).join('');
+}
+
+/* ── Multi-select helpers ── */
+function toggleMS(id) {
+  const panel = document.getElementById(id + 'Panel');
+  const isOpen = panel.classList.contains('open');
+  closeAllMS();
+  if (!isOpen) panel.classList.add('open');
+}
+function closeAllMS() {
+  document.querySelectorAll('.ms-panel.open').forEach(p => p.classList.remove('open'));
+}
+function getMS(id) {
+  return [...document.querySelectorAll('#' + id + 'Panel input:checked')].map(cb => cb.value);
+}
+function updateMSLabel(id, allLabel) {
+  const sel = getMS(id);
+  const el = document.getElementById(id + 'Label');
+  if (!el) return;
+  el.textContent = sel.length === 0 ? allLabel :
+                   sel.length === 1 ? sel[0] :
+                   sel.length + ' selected';
 }
 
 /* ═══════════════════════════════════════
    FILTERS
 ═══════════════════════════════════════ */
 function applyFilters() {
-  const role   = document.getElementById('fRole').value;
-  const offer  = document.getElementById('fOfferStatus').value;
-  const pos    = document.getElementById('fPositionStatus').value;
-  const prog   = document.getElementById('fProgram').value;
-  const dFrom  = document.getElementById('fDateFrom').value;
-  const dTo    = document.getElementById('fDateTo').value;
+  const roles    = getMS('msRole');
+  const offer    = document.getElementById('fOfferStatus').value;
+  const statuses = getMS('msPositionStatus');
+  const programs = getMS('msProgram');
+  const dFrom    = document.getElementById('fDateFrom').value;
+  const dTo      = document.getElementById('fDateTo').value;
 
   filteredData = allData.filter(r => {
-    if (role  && r[COL.role]       !== role)  return false;
-    if (offer && r[COL.offerStatus]!== offer) return false;
-    if (pos   && r[COL.posStatus]  !== pos)   return false;
-    if (prog  && r[COL.program]    !== prog)  return false;
+    if (roles.length    && !roles.includes(r[COL.role]))         return false;
+    if (offer           && r[COL.offerStatus] !== offer)         return false;
+    if (statuses.length && !statuses.includes(r[COL.posStatus])) return false;
+    if (programs.length && !programs.includes(r[COL.program]))   return false;
     if (dFrom || dTo) {
       const dateStr = r[COL.indentDate];
       if (!dateStr || dateStr === 'NA') return false;
@@ -679,6 +876,9 @@ function applyFilters() {
     }
     return true;
   });
+  updateMSLabel('msRole',           'All Roles');
+  updateMSLabel('msPositionStatus', 'All');
+  updateMSLabel('msProgram',        'All Programs');
   renderScoreCards();
   renderAllCharts();
   // Re-run drill-down if open
@@ -687,7 +887,13 @@ function applyFilters() {
   }
 }
 function clearFilters() {
-  ['fRole','fOfferStatus','fPositionStatus','fProgram'].forEach(id => document.getElementById(id).value = '');
+  ['msRole','msPositionStatus','msProgram'].forEach(id => {
+    document.querySelectorAll('#' + id + 'Panel input').forEach(cb => cb.checked = false);
+  });
+  updateMSLabel('msRole',           'All Roles');
+  updateMSLabel('msPositionStatus', 'All');
+  updateMSLabel('msProgram',        'All Programs');
+  document.getElementById('fOfferStatus').value = '';
   document.getElementById('fDateFrom').value = '';
   document.getElementById('fDateTo').value = '';
   applyFilters();
@@ -714,43 +920,103 @@ function parseDate(s) {
   }
   return new Date(s);
 }
+function daysDiff(startStr, endStr) {
+  const a = parseDate(startStr), b = parseDate(endStr);
+  if (!a || !b || isNaN(a) || isNaN(b)) return null;
+  return Math.round((b - a) / 86400000);
+}
+function dateToMonthYear(s) {
+  const d = parseDate(s);
+  if (!d || isNaN(d)) return null;
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function countByMonth(rows, colIdx) {
+  const map = {};
+  rows.forEach(r => {
+    const my = dateToMonthYear(r[colIdx]);
+    if (my) map[my] = (map[my]||0) + 1;
+  });
+  return map;
+}
 
 function renderScoreCards() {
   const D = filteredData;
-  const totalIndent   = D.length;
-  const totalClosed   = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed').length;
 
-  // Closed Within / Beyond TAT from col X (TAT Status – Offer)
-  const closedWithin  = D.filter(r => (r[COL.tatStatOffer]||'').toLowerCase().includes('within tat')).length;
-  const closedBeyond  = D.filter(r => (r[COL.tatStatOffer]||'').toLowerCase().includes('beyond tat') &&
-                                      (r[COL.tatStatOffer]||'').toLowerCase().includes('closed')).length;
+  // ── ROW 1: Key Metrics ──
+  const totalIndent  = D.length;
+  const totalClosed  = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed').length;
 
-  // Total Open: Position Status = "Open" ONLY (exclude On Hold)
-  const openRows      = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'open');
-  const totalOpen     = openRows.length;
+  // Closed Within / Beyond TAT from col AB (tatStatClosed)
+  // Use permissive match — handles "Within TAT", "Closed – Within TAT", etc.
+  const closedWithin = D.filter(r => (r[COL.tatStatClosed]||'').toLowerCase().includes('within')).length;
+  const closedBeyond = D.filter(r => (r[COL.tatStatClosed]||'').toLowerCase().includes('beyond')).length;
 
-  // Open Beyond TAT: from col X
-  const openBeyond    = D.filter(r => (r[COL.tatStatOffer]||'').toLowerCase().includes('open') &&
-                                      (r[COL.tatStatOffer]||'').toLowerCase().includes('delayed')).length;
+  // Avg Closed TAT: from col X (TAT: Indent → Closed Calc) for Closed positions
+  const withOffer    = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed' &&
+                                     num(r[COL.tatClosed]) !== null);
+  const avgClosedTAT = avg(withOffer.map(r => num(r[COL.tatClosed])));
 
-  // Avg Open TAT: Days Position Open for Open rows
-  const avgOpenTAT    = avg(openRows.map(r => num(r[COL.daysOpen])));
+  // ── ROW 2: Open & Hold Metrics ──
+  const openRows     = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'open');
+  const totalOpen    = openRows.length;
 
-  // Avg Closed TAT: TAT Indent→Offer for Closed rows with offer release date only
-  const withOffer     = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed' &&
-                                      r[COL.offerDate] && r[COL.offerDate] !== '' &&
+  // Open Beyond TAT from col AC (tatStatClosed)
+  const openBeyond   = D.filter(r => (r[COL.tatStatClosed]||'').toLowerCase().includes('open') &&
+                                     (r[COL.tatStatClosed]||'').toLowerCase().includes('delayed')).length;
+
+  // Avg Open (Beyond TAT): Days Position Open (col AB) for Open-beyond-TAT positions only
+  const openBeyondRows = D.filter(r => (r[COL.tatStatClosed]||'').toLowerCase().includes('open') &&
+                                       (r[COL.tatStatClosed]||'').toLowerCase().includes('delayed'));
+  const avgOpenTAT   = avg(openBeyondRows.map(r => num(r[COL.daysOpen])));
+
+  // On Hold count: col L (posStatus) = "On Hold"
+  const onHoldRows   = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'on hold');
+  const onHoldCount  = onHoldRows.length;
+
+  // Avg On Hold: col W (tatOnHold) for On Hold positions
+  const avgOnHold    = avg(onHoldRows.map(r => num(r[COL.tatOnHold])));
+
+  // ── ROW 3: TAT against Offer & Joining ──
+  // 1. Indent → Offer Release: avg col Y for rows WITH offer date
+  const offerRows     = D.filter(r => r[COL.offerDate] && r[COL.offerDate] !== '' &&
                                       r[COL.offerDate] !== 'NA' && r[COL.offerDate] !== '#N/A' &&
                                       num(r[COL.tatOffer]) !== null);
-  const avgClosedTAT  = avg(withOffer.map(r => num(r[COL.tatOffer])));
+  const avgIndOffer   = avg(offerRows.map(r => num(r[COL.tatOffer])));
 
-  setText('scTotal',     totalIndent);
-  setText('scClosed',    totalClosed);
-  setText('scWithinTAT', closedWithin);
-  setText('scBeyondTAT', closedBeyond);
-  setText('scOpen',      totalOpen);
-  setText('scOpenBeyond',openBeyond);
-  setText('scAvgOpen',   avgOpenTAT !== null ? avgOpenTAT.toFixed(1) + ' d' : '–');
-  setText('scAvgClosed', avgClosedTAT !== null ? avgClosedTAT.toFixed(1) + ' d' : '–');
+  // 2. Indent → Actual Joining: avg col Z for rows where joinStatus = 'Joined'
+  const joinedRows    = D.filter(r => (r[COL.joinStatus]||'').trim().toLowerCase() === 'joined' &&
+                                      num(r[COL.tatJoining]) !== null);
+  const avgIndJoined  = avg(joinedRows.map(r => num(r[COL.tatJoining])));
+
+  // 3. Indent → Expected DOJ (offer released): calc expJoinDate - indentDate
+  const today = new Date();
+  const expDOJOfferVals = D.filter(r => {
+    const hasOffer  = r[COL.offerDate] && r[COL.offerDate] !== '' && r[COL.offerDate] !== 'NA';
+    const hasExpDOJ = r[COL.expJoinDate] && r[COL.expJoinDate] !== '' && r[COL.expJoinDate] !== 'NA';
+    return hasOffer && hasExpDOJ;
+  }).map(r => daysDiff(r[COL.indentDate], r[COL.expJoinDate])).filter(v => v !== null);
+  const avgExpDOJOffer = avg(expDOJOfferVals);
+
+  // 4. Offer not released: use col Y (tatClosedNoOffer) — pre-calc days from closedDate to today
+  const agingVals     = D.filter(r => num(r[COL.tatClosedNoOffer]) !== null)
+                         .map(r => num(r[COL.tatClosedNoOffer])).filter(v => v !== null);
+  const avgAgingNoOffer = avg(agingVals);
+
+  // ── SET VALUES ──
+  setText('scTotal',            totalIndent);
+  setText('scClosed',           totalClosed);
+  setText('scWithinTAT',        closedWithin);
+  setText('scBeyondTAT',        closedBeyond);
+  setText('scAvgClosed',        avgClosedTAT     !== null ? Math.round(avgClosedTAT)     + ' d' : '–');
+  setText('scOpen',             totalOpen);
+  setText('scOpenBeyond',       openBeyond);
+  setText('scAvgOpen',          avgOpenTAT       !== null ? Math.round(avgOpenTAT)       + ' d' : '–');
+  setText('scOnHoldCount',      onHoldCount);
+  setText('scAvgOnHold',        avgOnHold        !== null ? Math.round(avgOnHold)        + ' d' : '–');
+  setText('scTatIndOffer',      avgIndOffer      !== null ? Math.round(avgIndOffer)      + ' d' : '–');
+  setText('scTatIndJoined',     avgIndJoined     !== null ? Math.round(avgIndJoined)     + ' d' : '–');
+  setText('scTatExpDOJOffer',   avgExpDOJOffer   !== null ? Math.round(avgExpDOJOffer)   + ' d' : '–');
+  setText('scTatAgingNoOffer',  avgAgingNoOffer  !== null ? Math.round(avgAgingNoOffer)  + ' d' : '–');
 }
 
 /* ═══════════════════════════════════════
@@ -805,7 +1071,13 @@ function countBy(data, colIdx) {
   return m;
 }
 
-function renderDonut(canvasId, countMap, title, clickFn) {
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// opts.pctLabels = true → segments show "xx.x%"; legend always shows "Label (count)"
+function renderDonut(canvasId, countMap, title, clickFn, opts={}) {
   const existing = charts[canvasId];
   if (existing) existing.destroy();
 
@@ -813,13 +1085,9 @@ function renderDonut(canvasId, countMap, title, clickFn) {
   const values = Object.values(countMap);
   const total  = values.reduce((a,b)=>a+b,0);
 
-  // Assign colors: use COLOR_MAP first, then DONUT_PALETTE for unknowns
-  // Track which DONUT_PALETTE index we're at to avoid repeated reuse
   let paletteIdx = 0;
-  const usedColors = new Set(Object.values(COLOR_MAP));
   const colors = labels.map(l => {
     if (COLOR_MAP[l]) return COLOR_MAP[l];
-    // pick next palette color not already used by a colorMap match in this chart
     let c = DONUT_PALETTE[paletteIdx % DONUT_PALETTE.length];
     paletteIdx++;
     return c;
@@ -861,12 +1129,17 @@ function renderDonut(canvasId, countMap, title, clickFn) {
             }
           }
         },
-        // Always-visible data labels on each segment
         datalabels: {
           display(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
-          formatter(value) { return value; },
+          formatter(value) {
+            if (opts.pctLabels) {
+              const pct = total ? ((value/total)*100).toFixed(1) : 0;
+              return pct + '%';
+            }
+            return value;
+          },
           color: '#fff',
-          font: { family: CHART_FONT, size: 13, weight: '700' },
+          font: { family: CHART_FONT, size: 12, weight: '700' },
           textShadowColor: 'rgba(0,0,0,0.4)',
           textShadowBlur: 4,
         }
@@ -903,6 +1176,7 @@ function renderBar(canvasId, countMap, clickFn) {
     },
     options: {
       responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      layout: { padding: { right: 30 } },
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label(ctx){ return ` ${ctx.parsed.x} positions`; } } },
@@ -918,8 +1192,7 @@ function renderBar(canvasId, countMap, clickFn) {
         x: {
           grid: { color: '#EEF2F7' },
           ticks: { font: { family: CHART_FONT, size: 11 } },
-          // Add a little padding so the label doesn't clip
-          afterDataLimits(scale) { scale.max += 1; }
+          afterDataLimits(scale) { scale.max += 3; }
         },
         y: { grid: { display: false }, ticks: { font: { family: CHART_FONT, size: 11 }, autoSkip: false } }
       },
@@ -933,18 +1206,104 @@ function renderBar(canvasId, countMap, clickFn) {
   });
 }
 
+function sortedMonthKeys(map) {
+  return Object.keys(map).sort();
+}
+
+function monthLabel(k) {
+  const [y, m] = k.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1] + '-' + String(y).slice(2);
+}
+
+// Line/trendline chart for monthly data
+function renderTrendLine(canvasId, monthMap, color, onClick) {
+  const keys   = sortedMonthKeys(monthMap);
+  const labels = keys.map(monthLabel);
+  const values = keys.map(k => monthMap[k]);
+
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (charts[canvasId]) charts[canvasId].destroy();
+
+  charts[canvasId] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: color || '#2E75B6',
+        backgroundColor: hexToRgba(color || '#2E75B6', 0.10),
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointBackgroundColor: color || '#2E75B6',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        fill: true,
+        tension: 0.35,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end', align: 'top',
+          formatter: v => v,
+          color: '#1A2744',
+          font: { family: CHART_FONT, size: 12, weight: '700' },
+        }
+      },
+      scales: {
+        x: { grid: { color: '#EEF2F7' }, ticks: { font: { family: CHART_FONT, size: 11 } } },
+        y: {
+          grid: { color: '#EEF2F7' },
+          ticks: { font: { family: CHART_FONT, size: 11 }, stepSize: 1, beginAtZero: true },
+          afterDataLimits(scale) { scale.max = Math.max(scale.max + 3, 4); }
+        }
+      },
+      onClick(evt, els) {
+        if (els.length && onClick) onClick(keys[els[0].index]);
+      }
+    }
+  });
+}
+
 function renderAllCharts() {
   const D = filteredData;
 
-  // 1. Hiring Status Overview (Position Status)
+  // 1. Hiring Status Overview — donut with % on segments, absolute count in legend
   renderDonut('chartHiringStatus', countBy(D, COL.posStatus), 'Hiring Status',
-    label => showDetailByColumn(COL.posStatus, label, 'Hiring Status: ' + label));
+    label => showDetailByColumn(COL.posStatus, label, 'Hiring Status: ' + label),
+    { pctLabels: true });
 
-  // 2. TAT Performance (TAT Status – Offer, col X)
-  renderDonut('chartTAT', countBy(D, COL.tatStatOffer), 'TAT Performance',
-    label => showDetailByColumn(COL.tatStatOffer, label, 'TAT Status: ' + label));
+  // 2. Indent Raised – Month-wise trendline (col H = indentDate)
+  const indentMonthMap = countByMonth(D, COL.indentDate);
+  renderTrendLine('chartIndentMonth', indentMonthMap, '#2E75B6',
+    key => {
+      const rows = D.filter(r => dateToMonthYear(r[COL.indentDate]) === key);
+      openModal('Indents Raised in ' + monthLabel(key), rows);
+    });
 
-  // 3. Role-wise Hiring
+  // 3. Position Closed – Month-wise trendline (col N = closedDate, closed positions only)
+  const closedRows = D.filter(r => (r[COL.posStatus]||'').toLowerCase() === 'closed');
+  const closedMonthMap = countByMonth(closedRows, COL.closedDate);
+  renderTrendLine('chartClosedMonth', closedMonthMap, '#1E7E34',
+    key => {
+      const rows = closedRows.filter(r => dateToMonthYear(r[COL.closedDate]) === key);
+      openModal('Positions Closed in ' + monthLabel(key), rows);
+    });
+
+  // 4. Month-wise Joining trendline (col S = actJoinDate, joined rows only)
+  const joinedRows = D.filter(r => (r[COL.joinStatus]||'').trim().toLowerCase() === 'joined');
+  const joiningMonthMap = countByMonth(joinedRows, COL.actJoinDate);
+  renderTrendLine('chartJoiningMonth', joiningMonthMap, '#0D7377',
+    key => {
+      const rows = joinedRows.filter(r => dateToMonthYear(r[COL.actJoinDate]) === key);
+      openModal('Joinings in ' + monthLabel(key), rows);
+    });
+
+  // 5. Role-wise Hiring
   const roleData = countBy(D, COL.role);
   if (Object.keys(roleData).length > 8) {
     renderBar('chartRole', roleData,
@@ -953,14 +1312,6 @@ function renderAllCharts() {
     renderDonut('chartRole', roleData, 'Role-wise',
       label => showDetailByColumn(COL.role, label, 'Role: ' + label));
   }
-
-  // 4. Offer Status Overview (col O = Offer Status)
-  renderDonut('chartOfferStatus', countBy(D, COL.offerStatus), 'Offer Status',
-    label => showDetailByColumn(COL.offerStatus, label, 'Offer Status: ' + label));
-
-  // 5. Joining Status
-  renderDonut('chartJoining', countBy(D, COL.joinStatus), 'Joining Status',
-    label => showDetailByColumn(COL.joinStatus, label, 'Joining Status: ' + label));
 
   // 6. Program-wise Hiring
   const progData = countBy(D, COL.program);
@@ -982,15 +1333,36 @@ function showDetail(filter) {
   const D = filteredData;
 
   switch(filter) {
-    case 'all':      rows = D; title = 'All Indents'; break;
-    case 'closed':   rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='closed'); title='Closed Positions'; break;
-    case 'withinTAT':rows = D.filter(r=>(r[COL.tatStatOffer]||'').toLowerCase().includes('within tat')); title='Closed Within TAT'; break;
-    case 'beyondTAT':rows = D.filter(r=>(r[COL.tatStatOffer]||'').toLowerCase().includes('beyond tat')&&(r[COL.tatStatOffer]||'').toLowerCase().includes('closed')); title='Closed Beyond TAT'; break;
-    case 'open':     rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='open'); title='Open Positions'; break;
-    case 'openBeyond':rows= D.filter(r=>(r[COL.tatStatOffer]||'').toLowerCase().includes('open')&&(r[COL.tatStatOffer]||'').toLowerCase().includes('delayed')); title='Open – Delayed'; break;
-    case 'avgOpen':  rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='open'); title='Open Positions (Avg TAT)'; break;
-    case 'avgClosed':rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='closed'&&r[COL.offerDate]&&r[COL.offerDate]!=='NA'); title='Closed Positions with Offer (Avg Closed TAT)'; break;
-    default:         rows = D; title='Detail View';
+    // Row 1 – Key Metrics
+    case 'all':         rows = D; title='All Indents'; break;
+    case 'closed':      rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='closed'); title='Closed Positions'; break;
+    case 'withinTAT':   rows = D.filter(r=>(r[COL.tatStatClosed]||'').toLowerCase().includes('within')); title='Closed Within TAT (TAT Status – Closed)'; break;
+    case 'beyondTAT':   rows = D.filter(r=>(r[COL.tatStatClosed]||'').toLowerCase().includes('beyond')); title='Closed Beyond TAT (TAT Status – Closed)'; break;
+    case 'avgClosed':   rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='closed'&&num(r[COL.tatClosed])!==null); title='Closed Positions (Avg Closed TAT – col X)'; break;
+    // Row 2 – Open & Hold Metrics
+    case 'open':        rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='open'); title='Open Positions'; break;
+    case 'openBeyond':  rows = D.filter(r=>(r[COL.tatStatClosed]||'').toLowerCase().includes('open')&&(r[COL.tatStatClosed]||'').toLowerCase().includes('delayed')); title='Open – Delayed'; break;
+    case 'avgOpen':     rows = D.filter(r=>(r[COL.tatStatClosed]||'').toLowerCase().includes('open')&&(r[COL.tatStatClosed]||'').toLowerCase().includes('delayed')); title='Open – Beyond TAT (Avg Days Open)'; break;
+    case 'onHold':      rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='on hold'); title='On Hold Positions'; break;
+    case 'avgOnHold':   rows = D.filter(r=>(r[COL.posStatus]||'').toLowerCase()==='on hold'&&num(r[COL.tatOnHold])!==null); title='On Hold Positions (Avg Days)'; break;
+    // Row 3 – TAT against Offer & Joining
+    case 'tatIndOffer':
+      rows = D.filter(r=>r[COL.offerDate]&&r[COL.offerDate]!==''&&r[COL.offerDate]!=='NA'&&r[COL.offerDate]!=='#N/A'&&num(r[COL.tatOffer])!==null);
+      title='Indent → Offer Release (Positions with Offer Date)'; break;
+    case 'tatIndJoined':
+      rows = D.filter(r=>(r[COL.joinStatus]||'').trim().toLowerCase()==='joined'&&num(r[COL.tatJoining])!==null);
+      title='Indent → Actual Joining (Joined Positions)'; break;
+    case 'tatExpDOJOffer': {
+      const hasOff = r=>r[COL.offerDate]&&r[COL.offerDate]!==''&&r[COL.offerDate]!=='NA'&&r[COL.offerDate]!=='#N/A';
+      const hasExp = r=>r[COL.expJoinDate]&&r[COL.expJoinDate]!==''&&r[COL.expJoinDate]!=='NA'&&r[COL.expJoinDate]!=='#N/A';
+      rows = D.filter(r=>hasOff(r)&&hasExp(r));
+      title='Indent → Expected DOJ (Offer Released)'; break;
+    }
+    case 'tatAgingNoOffer': {
+      rows = D.filter(r => num(r[COL.tatClosedNoOffer]) !== null);
+      title='Offer Not Released (Closed – col Y populated)'; break;
+    }
+    default: rows = D; title='Detail View';
   }
   openModal(title, rows);
 }
@@ -1006,8 +1378,9 @@ function openModal(title, rows) {
 
   const tbody = document.getElementById('modalBody');
   tbody.innerHTML = rows.map((r,i) => {
-    const tat = (r[COL.tatStatOffer]||'').trim();
-    const tatBadge = tatBadgeClass(tat);
+    const tatC = (r[COL.tatStatClosed]||'').trim();
+    const tatO = (r[COL.tatStatOffer]||'').trim();
+    const tatJ = (r[COL.tatStatJoin]||'').trim();
     const ps = (r[COL.posStatus]||'').trim();
     const psBadge = ps.toLowerCase()==='closed'?'badge-green': ps.toLowerCase()==='open'?'badge-blue':'badge-amber';
     return `<tr>
@@ -1017,12 +1390,17 @@ function openModal(title, rows) {
       <td>${escHtml(r[COL.role]||'–')}</td>
       <td>${escHtml(r[COL.candidate]||'–')}</td>
       <td>${escHtml(r[COL.indentDate]||'–')}</td>
+      <td>${escHtml(r[COL.closedDate]||'–')}</td>
       <td>${escHtml(r[COL.offerDate]||'–')}</td>
       <td>${escHtml(r[COL.actJoinDate]||'–')}</td>
       <td><span class="badge ${psBadge}">${escHtml(ps||'–')}</span></td>
       <td>${escHtml(r[COL.offerStatus]||'–')}</td>
-      <td><span class="badge ${tatBadge}">${escHtml(tat||'–')}</span></td>
-      <td>${escHtml(r[COL.tatStatJoin]||'–')}</td>
+      <td>${r[COL.tatClosed]||'–'}</td>
+      <td>${r[COL.tatOffer]||'–'}</td>
+      <td>${r[COL.tatJoining]||'–'}</td>
+      <td><span class="badge ${tatBadgeClass(tatC)}">${escHtml(tatC||'–')}</span></td>
+      <td><span class="badge ${tatBadgeClass(tatO)}">${escHtml(tatO||'–')}</span></td>
+      <td><span class="badge ${tatBadgeClass(tatJ)}">${escHtml(tatJ||'–')}</span></td>
       <td>${r[COL.daysOpen]||'–'}</td>
       <td>${escHtml(r[COL.recruiter]||'–')}</td>
     </tr>`;
@@ -1050,8 +1428,9 @@ function closeModalBtn() {
 function downloadModalCSV() {
   const title  = document.getElementById('modalTitle').textContent;
   const headers = ['#','Centre/Location','Program','Role','Candidate Name',
-    'Indent Date','Offer Release Date','Joining Date','Position Status',
-    'Offer Status','TAT Status – Offer','TAT Status – Joining','Days Open','Recruiter'];
+    'Indent Date','Pos. Closed Date','Offer Release Date','Joining Date','Position Status',
+    'Offer Status','TAT: Closed (d)','TAT: Offer (d)','TAT: Joining (d)',
+    'TAT Status – Closed','TAT Status – Offer','TAT Status – Joining','Days Open','Recruiter'];
   const rows = [...document.querySelectorAll('#modalBody tr')].map(tr =>
     [...tr.querySelectorAll('td')].map(td => {
       const text = td.innerText.trim();
@@ -1077,6 +1456,9 @@ function toggleDownloadMenu() {
 document.addEventListener('click', e => {
   if (!e.target.closest('.btn-download-header') && !e.target.closest('.download-menu')) {
     document.getElementById('downloadMenu').classList.remove('open');
+  }
+  if (!e.target.closest('.ms-wrap')) {
+    closeAllMS();
   }
 });
 
