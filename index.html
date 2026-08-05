@@ -623,6 +623,7 @@
             <th>TAT Status – Joining</th>
             <th>Days Open</th>
             <th>Recruiter</th>
+            <th>Reason for Hold</th>
           </tr>
         </thead>
         <tbody id="modalBody"></tbody>
@@ -635,16 +636,17 @@
 /* ═══════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════ */
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/18iBus8OtRl86N9fvaNSoi7jnEJ-hOE5mEntNt0snrYE/gviz/tq?tqx=out:csv';
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/18iBus8OtRl86N9fvaNSoi7jnEJ-hOE5mEntNt0snrYE/gviz/tq?tqx=out:csv&gid=768065580';
 const REFRESH_MINUTES = 5;
 
 /* ═══════════════════════════════════════
-   COLUMN INDEX MAP (0-based) — 38-column sheet (updated Jun-2026)
-   38-column sheet (Jun-2026 — col Y and col AJ added):
+   COLUMN INDEX MAP (0-based) — 40-column sheet (updated Aug-2026)
+   40-column sheet (Aug-2026 — col AN "Reason for Hold" added):
    A=0  B=1  C=2  D=3  E=4  F=5  G=6  H=7  I=8
    J=9  K=10 L=11 M=12 N=13 O=14 P=15 Q=16 R=17
    S=18 T=19 U=20 V=21 W=22 X=23 Y=24 Z=25 AA=26
    AB=27 AC=28 AD=29 AE=30 AF=31 AG=32 AH=33 AI=34 AJ=35 AK=36 AL=37
+   AM=38 AN=39
 ═══════════════════════════════════════ */
 const COL = {
   sno:              0,  // A:  S. No.
@@ -685,6 +687,8 @@ const COL = {
   closedMonth:      35, // AJ: Position Closed Month   [NEW]
   offerMonth:       36, // AK: Offer Month
   joinMonth:        37, // AL: Joining Month
+  exceptionDays:    38, // AM: Exception Days           [NEW Aug-2026]
+  reasonForHold:    39, // AN: Reason for Hold          [NEW Aug-2026]
 };
 
 /* ═══════════════════════════════════════
@@ -1403,6 +1407,7 @@ function openModal(title, rows) {
       <td><span class="badge ${tatBadgeClass(tatJ)}">${escHtml(tatJ||'–')}</span></td>
       <td>${r[COL.daysOpen]||'–'}</td>
       <td>${escHtml(r[COL.recruiter]||'–')}</td>
+      <td>${escHtml(r[COL.reasonForHold]||'–')}</td>
     </tr>`;
   }).join('');
 
@@ -1430,7 +1435,8 @@ function downloadModalCSV() {
   const headers = ['#','Centre/Location','Program','Role','Candidate Name',
     'Indent Date','Pos. Closed Date','Offer Release Date','Joining Date','Position Status',
     'Offer Status','TAT: Closed (d)','TAT: Offer (d)','TAT: Joining (d)',
-    'TAT Status – Closed','TAT Status – Offer','TAT Status – Joining','Days Open','Recruiter'];
+    'TAT Status – Closed','TAT Status – Offer','TAT Status – Joining','Days Open','Recruiter',
+    'Reason for Hold'];
   const rows = [...document.querySelectorAll('#modalBody tr')].map(tr =>
     [...tr.querySelectorAll('td')].map(td => {
       const text = td.innerText.trim();
