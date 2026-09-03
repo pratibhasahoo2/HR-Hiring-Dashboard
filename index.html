@@ -418,6 +418,16 @@
       <div class="ms-panel" id="msProgramPanel"></div>
     </div>
   </div>
+  <div class="filter-group">
+    <label>Funding Partner</label>
+    <div class="ms-wrap" id="msFundingPartner">
+      <button class="ms-btn" type="button" onclick="toggleMS('msFundingPartner')">
+        <span class="ms-label" id="msFundingPartnerLabel">All Partners</span>
+        <span class="ms-caret">▾</span>
+      </button>
+      <div class="ms-panel" id="msFundingPartnerPanel"></div>
+    </div>
+  </div>
   <div class="period-group">
     <label>Period (Indent Date)</label>
     <div class="period-inputs">
@@ -784,6 +794,7 @@ function populateFilters(preserve) {
     roles:    getMS('msRole'),
     statuses: getMS('msPositionStatus'),
     programs: getMS('msProgram'),
+    partners: getMS('msFundingPartner'),
     offer:    document.getElementById('fOfferStatus').value,
     dateFrom: document.getElementById('fDateFrom').value,
     dateTo:   document.getElementById('fDateTo').value,
@@ -795,18 +806,21 @@ function populateFilters(preserve) {
   fillSelect('fOfferStatus', OFFER_STATUS_OPTS);
   fillMultiSelect('msPositionStatus', unique(allData.map(r => r[COL.posStatus])));
   fillMultiSelect('msProgram',        unique(allData.map(r => r[COL.program])));
+  fillMultiSelect('msFundingPartner', unique(allData.map(r => r[COL.project])));
 
   // Restore prior selections on refresh
   if (saved) {
     restoreMS('msRole',           saved.roles);
     restoreMS('msPositionStatus', saved.statuses);
     restoreMS('msProgram',        saved.programs);
+    restoreMS('msFundingPartner', saved.partners);
     if (saved.offer)    document.getElementById('fOfferStatus').value = saved.offer;
     if (saved.dateFrom) document.getElementById('fDateFrom').value    = saved.dateFrom;
     if (saved.dateTo)   document.getElementById('fDateTo').value      = saved.dateTo;
     updateMSLabel('msRole',           'All Roles');
     updateMSLabel('msPositionStatus', 'All');
     updateMSLabel('msProgram',        'All Programs');
+    updateMSLabel('msFundingPartner', 'All Partners');
   }
 }
 function restoreMS(id, values) {
@@ -862,6 +876,7 @@ function applyFilters() {
   const offer    = document.getElementById('fOfferStatus').value;
   const statuses = getMS('msPositionStatus');
   const programs = getMS('msProgram');
+  const partners = getMS('msFundingPartner');
   const dFrom    = document.getElementById('fDateFrom').value;
   const dTo      = document.getElementById('fDateTo').value;
 
@@ -870,6 +885,7 @@ function applyFilters() {
     if (offer           && r[COL.offerStatus] !== offer)         return false;
     if (statuses.length && !statuses.includes(r[COL.posStatus])) return false;
     if (programs.length && !programs.includes(r[COL.program]))   return false;
+    if (partners.length && !partners.includes(r[COL.project]))   return false;
     if (dFrom || dTo) {
       const dateStr = r[COL.indentDate];
       if (!dateStr || dateStr === 'NA') return false;
@@ -883,6 +899,7 @@ function applyFilters() {
   updateMSLabel('msRole',           'All Roles');
   updateMSLabel('msPositionStatus', 'All');
   updateMSLabel('msProgram',        'All Programs');
+  updateMSLabel('msFundingPartner', 'All Partners');
   renderScoreCards();
   renderAllCharts();
   // Re-run drill-down if open
@@ -891,12 +908,13 @@ function applyFilters() {
   }
 }
 function clearFilters() {
-  ['msRole','msPositionStatus','msProgram'].forEach(id => {
+  ['msRole','msPositionStatus','msProgram','msFundingPartner'].forEach(id => {
     document.querySelectorAll('#' + id + 'Panel input').forEach(cb => cb.checked = false);
   });
   updateMSLabel('msRole',           'All Roles');
   updateMSLabel('msPositionStatus', 'All');
   updateMSLabel('msProgram',        'All Programs');
+  updateMSLabel('msFundingPartner', 'All Partners');
   document.getElementById('fOfferStatus').value = '';
   document.getElementById('fDateFrom').value = '';
   document.getElementById('fDateTo').value = '';
